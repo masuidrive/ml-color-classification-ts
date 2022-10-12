@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { COLOR_INDEX_LABEL, TRAIN_DATA, TEST_DATA } from "../dataset";
 import { sum, shuffle } from "lodash";
 
@@ -25,7 +24,7 @@ function dot_produce(x: number[][], y: number[][]): number[][] {
 }
 
 function matrix_add(x: number[][], y: number[]): number[][] {
-  return x.map((xx, xi) => xx.map((x3, i) => x3 * y[i]));
+  return x.map((xx, xi) => xx.map((x3, i) => x3 + y[i]));
 }
 
 function predict(x: number[][], weights: any): any {
@@ -38,12 +37,13 @@ function predict(x: number[][], weights: any): any {
     // xxは3次元のベクトル
     sum(xx.map((x3, i) => x3 * weights.W1[i][xi]))
   );
+  // console.log("x,w", JSON.stringify([x, weights.W1]));
   const a1 = matrix_add(dot_produce(x, weights.W1), weights.b1);
-  console.log("a1", a1);
+  //console.log("a1", JSON.stringify(a1));
   const z1 = relu(a1);
   const a2 = matrix_add(dot_produce(z1, weights.W2), weights.b2);
   const y = softmax(a2);
-  console.log("y", y);
+  //console.log("y", JSON.stringify(y));
   return y;
 }
 
@@ -58,6 +58,7 @@ function numerical_gradient_1d(loss_func: any, x: number[]) {
     const fxh2 = loss_func(x);
 
     grad[idx] = (fxh1 - fxh2) / (2 * h);
+    // console.log("!",grad[idx] ,fxh1 , fxh2);
 
     x[idx] = val;
   });
@@ -86,6 +87,24 @@ function cross_entropy_error(y: number[][], t: number[]) {
 function loss(x: number[][], t: number[], weights: any) {
   const y = predict(x, weights);
   return cross_entropy_error(y, t);
+}
+
+function argmax(vector:number[]) {
+  return vector.map((x, i) => [x, i]).reduce((r, a) => (a[0] > r[0] ? a : r))[1];
+}
+
+function accuracy(x: number[][], t: number[], weights: any) {
+  const y = predict(x, weights);
+  console.log(JSON.stringify(y))
+  const yy = y.map((v:number[]) => argmax(v));
+  let a = 0;
+  for(let i =0; i<t.length; ++i) {
+    if(yy[i] == t[i]){
+      ++a;
+    }
+  }
+
+  return a / t.length;
 }
 
 // x:入力データ, t:教師データ
@@ -118,14 +137,19 @@ function init_weight(
   );
 }
 
-export function hello(name: string) {
+function matrix_shape(matrix:number[][]) {
+  return [matrix.length, matrix[0].length]
+}
+
+
+export function hello() {
   console.log("> hello");
-  const iters_num = 3;
+  const iters_num = 1000;
   const train_size = TRAIN_DATA.length;
   const input_size = TRAIN_DATA[0].length - 1;
   const output_size = COLOR_INDEX_LABEL.length;
 
-  const batch_size = 100;
+  const batch_size = 10;
   const learning_rate = 0.001;
   const hidden_size = 30;
 
@@ -140,11 +164,10 @@ export function hello(name: string) {
     W2: init_weight(weight_init_std, hidden_size, output_size),
     b2: [...Array(output_size)].map(() => 0)
   };
+  console.log("init weights", JSON.stringify(weights));
 
   const iter_per_epoch = Math.max(Math.floor(train_size / batch_size), 1);
   for (let iter = 0; iter < iters_num; ++iter) {
-    console.log(`> iter ${iter}`);
-
     // ミニバッチの取得
     // ランダムにbatch_size個分のx_train, t_trainを取り出す
     const batch_mask = shuffle([...Array(train_size)].map((_, i) => i)).slice(
@@ -157,17 +180,48 @@ export function hello(name: string) {
 
     // 勾配を求める
     const grad = numerical_gradient(x_batch, t_batch, weights);
+    // console.log("batch", JSON.stringify([x_batch, t_batch]));
 
-    console.log(grad);
+   // console.log("grad", JSON.stringify(grad));
 
     // パラメータの更新
-    console.log("update");
+    //console.log("update");
     ["W1", "b1", "W2", "b2"].forEach((key) => {
-      console.log("key", weights[key].length, grad[key].length);
+      // console.log("key", JSON.stringify((weights as any)[key].length, (grad as any)[key].length));
       //      weights[key] -= learning_rate * grad[key];
+      (weights as any)[key] = (weights as any)[key].map((row:any,rowi:number) => {
+        if(row[0]　===　undefined) { // 1D
+          return row - learning_rate * (grad as any )[key][rowi];
+        }
+        else {
+          return row.map((val:number,vali:number) =>
+           val - learning_rate * (grad as any )[key][rowi][vali]);
+        }
+      })
+      //console.log("key",key, matrix_shape( (weights as any)[key] ),matrix_shape( (grad as any)[key] ) )
     });
+    if(iter % iter_per_epoch == 0) {
+      const train_acc = accuracy(TRAIN_DATA.map((data) => data.slice(1, 4)), TRAIN_DATA.map((data) => data[0]), weights)
+      const test_acc = accuracy(TEST_DATA.map((data) => data.slice(1, 4)), TEST_DATA.map((data) => data[0]), weights)
+      console.log(`${iter}: train acc, test acc, loss: ${train_acc}, ${test_acc}, ${loss(x_batch, t_batch, weights)}`)
+    }
+
+    /*
+  loss = network.loss(x_batch, t_batch)
+  train_loss_list.append(loss)
+
+  # 1 エポックごとに認識精度を計算
+  if i % iter_per_epoch == 0:
+    train_acc = network.accuracy(x_train, t_train)
+    test_acc = network.accuracy(x_verify, t_verify)
+    train_acc_list.append(train_acc)
+    test_acc_list.append(test_acc)
+    print(f'train acc, test acc: {train_acc}, {test_acc}')
+
+    */
   }
-  console.log(weights);
+  //console.log("weights", JSON.stringify(weights));
+
   /*
     const x = [
       [1, 2],
@@ -191,5 +245,4 @@ export function hello(name: string) {
     console.log(x.length);
   */
 
-  return `Hello, ${name}`;
 }

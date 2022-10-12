@@ -1,15 +1,33 @@
 {
-    "include": [
-        "./src/**/*"
-    ],
+  "include": [
+    "./src/**/*"
+  ],
+  "ts-node": {
+    // these options are overrides used only by ts-node
+    // same as the --compilerOptions flag and the TS_NODE_COMPILER_OPTIONS environment variable
     "compilerOptions": {
-        "strict": true,
-        "esModuleInterop": true,
-        "lib": [
-            "dom",
-            "es2015",
-            "WebWorker"
-        ],
-        "jsx": "react-jsx"
+      "module": "commonjs"
     }
+  },
+  "compilerOptions": {
+    "strict": true,
+    "esModuleInterop": true,
+    "lib": [
+      "dom",
+      "es2015",
+      "WebWorker"
+    ],
+    "jsx": "react-jsx",
+    "target": "es5",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "ES2015",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true
+  } 
 }
