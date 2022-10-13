@@ -1,2 +1,2 @@
-import {hello} from "./workers"
-hello()
+import { train } from "./workers"
+train()
