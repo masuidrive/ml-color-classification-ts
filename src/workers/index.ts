@@ -1,4 +1,10 @@
+export { }
 import { COLOR_INDEX_LABEL, TRAIN_DATA, TEST_DATA } from "../dataset";
+
+// 親に進捗を送る
+const progress = (label: string, data?: any) => {
+    self.postMessage({ command: "progress", label, data })
+}
 
 // 1次元配列以上かどうかの確認
 const is1D = <T>(maybeArray: T | readonly T[][] | readonly T[]): maybeArray is T[] =>
@@ -11,7 +17,6 @@ const is2D = <T>(maybeArray: T | readonly T[][] | readonly T[]): maybeArray is T
 /// 0で埋めた1次元配列を返す
 const fill_zero_1d = (size: number): number[] =>
     [...Array(size)].map(() => 0);
-
 
 /// 0から(maxNum ?? size)までの重複しないランダムな値の入った、要素数sizeの1次元配列を返す
 const non_overlapping_random_1d = (size: number, maxNum?: number): number[] => {
@@ -166,6 +171,7 @@ export function train() {
 
     const iter_per_epoch = Math.max(Math.floor(train_size / batch_size), 1);
     for (let iter = 0; iter < iters_num; ++iter) {
+        progress("train:iterator", { weights, iter })
         // ミニバッチの取得
         // ランダムにbatch_size個分のtrainRGB, trainColorIndexを取り出す
         const batch_mask = non_overlapping_random_1d(batch_size, train_size);
@@ -198,5 +204,12 @@ export function train() {
     const test_acc = accuracy(TEST_DATA.map((data) => data.slice(1, 4)), TEST_DATA.map((data) => data[0]), weights)
     console.log(`Fin: train acc, test acc, loss: ${train_acc}, ${test_acc}`)
     console.log(JSON.stringify(weights))
-    self.postMessage("hello");
+    progress("train:finish")
 }
+
+self.onmessage = (message: MessageEvent) => {
+    console.log("onmessage", message)
+    if (message?.data.command === "train:start") {
+        train();
+    }
+};
