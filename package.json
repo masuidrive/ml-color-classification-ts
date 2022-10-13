@@ -13,9 +13,11 @@
     "@emotion/styled": "11.10.4",
     "@mui/material": "5.10.8",
     "@shopify/react-web-worker": "5.0.6",
+    "konva": "^8.3.13",
     "plotly.js": "2.14.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-konva": "^18.2.2",
     "react-plotly.js": "2.6.0",
     "react-scripts": "5.0.1"
   },

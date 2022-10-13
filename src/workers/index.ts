@@ -1,4 +1,3 @@
-export { }
 import { COLOR_INDEX_LABEL, TRAIN_DATA, TEST_DATA } from "../dataset";
 
 // 親に進捗を送る
@@ -168,6 +167,7 @@ export function train() {
         W2: product_2d_number(random_2d(hidden_size, output_size), weight_init_std),
         b2: fill_zero_1d(output_size)
     };
+    progress("train:info", { weight_init_std, iters_num, hidden_size, train_size, input_size, output_size, batch_size, learning_rate })
 
     const iter_per_epoch = Math.max(Math.floor(train_size / batch_size), 1);
     for (let iter = 0; iter < iters_num; ++iter) {
@@ -195,21 +195,24 @@ export function train() {
         }
 
         if (iter % iter_per_epoch == 0) {
-            const train_acc = accuracy(TRAIN_DATA.map((data) => data.slice(1, 4)), TRAIN_DATA.map((data) => data[0]), weights)
-            const test_acc = accuracy(TEST_DATA.map((data) => data.slice(1, 4)), TEST_DATA.map((data) => data[0]), weights)
-            console.log(`${iter}: train acc, test acc, loss: ${train_acc}, ${test_acc}, ${loss(trainRGB, trainColorLabel, weights)}`)
+            const epoch = Math.floor(iter / iter_per_epoch)
+            const train_accuracy = accuracy(TRAIN_DATA.map((data) => data.slice(1, 4)), TRAIN_DATA.map((data) => data[0]), weights)
+            const test_accuracy = accuracy(TEST_DATA.map((data) => data.slice(1, 4)), TEST_DATA.map((data) => data[0]), weights)
+            progress("train:epoch", { epoch, train_accuracy, test_accuracy })
+            console.log(`${iter}: train acc, test acc, loss: ${train_accuracy}, ${train_accuracy}, ${loss(trainRGB, trainColorLabel, weights)}`)
         }
     }
     const train_acc = accuracy(TRAIN_DATA.map((data) => data.slice(1, 4)), TRAIN_DATA.map((data) => data[0]), weights)
     const test_acc = accuracy(TEST_DATA.map((data) => data.slice(1, 4)), TEST_DATA.map((data) => data[0]), weights)
     console.log(`Fin: train acc, test acc, loss: ${train_acc}, ${test_acc}`)
-    console.log(JSON.stringify(weights))
     progress("train:finish")
 }
 
 self.onmessage = (message: MessageEvent) => {
     console.log("onmessage", message)
     if (message?.data.command === "train:start") {
+        console.log(">train");
         train();
+        console.log("<train");
     }
-};
+}
