@@ -1,4 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .App {
   font-family: sans-serif;
   text-align: center;
+}
+
+.range-red {
+  --range-shdw: 0 50% 50%;
+}
+
+.range-green {
+  --range-shdw: 150 50% 50%;
+}
+
+.range-blue {
+  --range-shdw: 220 50% 50%;
 }
