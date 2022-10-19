@@ -2,7 +2,7 @@ import { FC, useEffect, useState } from 'react';
 // import { Text, Line, Circle, Rect, Layer, Stage } from "react-konva";
 import { Range, Badge } from 'react-daisyui';
 import './styles.css';
-import { DLGraph } from './DLGraph';
+import { DLGraph } from './components/DLGraph';
 
 const worker = new Worker(new URL('./workers', import.meta.url));
 setTimeout(() => {
