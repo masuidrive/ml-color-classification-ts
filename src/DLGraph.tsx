@@ -39,9 +39,19 @@ const Text = ({ x, y, width, height, fontSize, text, color, align }: TextProps) 
   </text>
 );
 
-type CircleProps = { x: number; y: number; radius: number; fill: string; borderColor?: string; style?: any };
-const Circle = ({ x, y, fill, radius, borderColor, style }: CircleProps) => (
-  <circle cx={x} cy={y} r={radius} style={{ fill, stroke: borderColor, strokeWidth: 2, ...style }} />
+type CircleProps = {
+  x: number;
+  y: number;
+  radius: number;
+  fill: string;
+  title?: string;
+  borderColor?: string;
+  style?: any;
+};
+const Circle = ({ x, y, fill, radius, borderColor, title, style }: CircleProps) => (
+  <circle cx={x} cy={y} r={radius} style={{ fill, stroke: borderColor, strokeWidth: 2, ...style }}>
+    <title>{title}</title>
+  </circle>
 );
 
 // https://feathericons.com/
@@ -82,6 +92,59 @@ const RightArrowIcon = ({ x, y, size, stroke = 'currentColor' }: IconProps) => (
     <polyline points="12 5 19 12 12 19" />
   </svg>
 );
+
+type TooltipProps = {
+  x: number;
+  y: number;
+  width: number;
+  lineHeight: number;
+  arrow?: string;
+  text: string | string[];
+};
+const Tooltip = ({ x, y, width, lineHeight, arrow, text }: TooltipProps) => {
+  if (typeof text == 'string') {
+    text = text.split(/\n/);
+  }
+  const lineCount = text.length;
+  const arrowSize = 8;
+  const radius = 5;
+  const height = lineHeight * lineCount;
+  const top = y + arrowSize;
+  const left = x;
+  const right = x + width;
+  const bottom = y + height + arrowSize;
+  const path = `M ${x},${y}
+    l 0,0 ${arrowSize / 2},${arrowSize}
+    h ${width - arrowSize * 1.5}
+    a ${radius},${radius} 0 0 1 ${radius},${radius}
+    v ${height}
+    a ${radius},${radius} 0 0 1 ${-radius},${radius}
+    h ${-width}
+    a ${radius},${radius} 0 0 1 ${-radius},${-radius}
+    v ${-height}
+    a ${radius},${radius} 0 0 1 ${radius},${-radius}
+    h ${arrowSize * 0.5}
+    z`;
+
+  return (
+    <g>
+      <path fill="#eeeeee" stroke="#888888" d={path} strokeWidth={2} />
+      {text.map((line, lineNo) => (
+        <text
+          x={x}
+          y={y + arrowSize + radius + lineHeight / 2 + lineNo * lineHeight}
+          stroke="black"
+          dominantBaseline="central"
+          fontFamily="monospace"
+          fontSize={12}
+          fontWeight="normal"
+        >
+          {line}
+        </text>
+      ))}
+    </g>
+  );
+};
 
 const times = (n: number, callbackfn: (index: number) => number[] | void) =>
   [...Array(n)].map((_: any, index: number) => callbackfn(index));
@@ -132,6 +195,7 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
         radius={cellSize / 2}
         borderColor={`rgb(${(val < 64 ? borderColor : color).join(',')})`}
         fill={`rgb(${color.join(',')})`}
+        title="sss"
         key={`${posX}-${i}`}
       />,
     );
@@ -223,6 +287,14 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
         <path d="M 0 0 L 10 5 L 0 10 z" fill="#aaaaaa" />
       </marker>
       {elements}
+      <Tooltip
+        x={113}
+        y={105}
+        width={250}
+        lineHeight={16}
+        offset=""
+        text={['W11 * input + b1 = 0.001283134', 'input = 0.242389539', 'W11 = 1.242389539', 'b1 = 0.001283134']}
+      />
     </svg>
   );
 };

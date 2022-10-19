@@ -485,7 +485,7 @@ export default function App() {
     const output_layer = 10;
     const max_layer_height = Math.max(input_layer, hidden_layer, output_layer);
     return (
-      <div title="Home">
+      <div>
         <DLGraph weights={message?.data?.weights} layersCount={2} inputs={rgb} />
         <hr />
         {form}
