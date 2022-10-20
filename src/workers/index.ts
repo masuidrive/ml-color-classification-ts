@@ -111,8 +111,6 @@ export const predict = (x: number[], weights: any): number[] => {
         )) as number[];
     //const a2 = add_1d(dot_produce_1d_2d(z1, weights.W2), weights.b2);
     const y = softmax_1d(a2);
-    if (typeof window != "undefined")
-        console.log("a1", a1, "a2", a2, "softmax", y);
 
     return y;
 }

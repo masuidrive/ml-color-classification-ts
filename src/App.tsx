@@ -415,9 +415,9 @@ const Cell: FC<CellProps> = ({ x, y, size, height, maxHeight, color, border }) =
 
 export default function App() {
   const [message, setMessage] = useState<any>({});
-  const [colorR, setColorR] = useState<number>(Math.floor(Math.random()));
-  const [colorG, setColorG] = useState<number>(Math.floor(Math.random()));
-  const [colorB, setColorB] = useState<number>(Math.floor(Math.random()));
+  const [colorR, setColorR] = useState<number>(Math.floor(Math.random() * 255));
+  const [colorG, setColorG] = useState<number>(Math.floor(Math.random() * 255));
+  const [colorB, setColorB] = useState<number>(Math.floor(Math.random() * 255));
   useEffect(() => {
     worker.onmessage = (message: MessageEvent) => {
       if (message?.data?.command === 'progress' && message?.data?.label == 'train:iterator') {
@@ -489,6 +489,7 @@ export default function App() {
     const answers = predict(rgb, message?.data?.weights);
     return (
       <div>
+        {form}
         <DLGraph weights={message?.data?.weights} layersCount={2} inputs={rgb} />
         {COLOR_INDEX_LABEL.map((label, idx) => (
           <div>
@@ -496,7 +497,6 @@ export default function App() {
           </div>
         ))}
         <hr />
-        {form}
         <hr />
         W1
         <ColorMatrix2D matrix={W1} rotate={true} />
