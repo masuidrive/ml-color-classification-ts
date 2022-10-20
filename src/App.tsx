@@ -3,6 +3,8 @@ import { FC, useEffect, useState } from 'react';
 import { Range, Badge } from 'react-daisyui';
 import './styles.css';
 import { DLGraph } from './components/DLGraph';
+import { predict } from './workers';
+import { COLOR_INDEX_LABEL } from './dataset';
 
 const worker = new Worker(new URL('./workers', import.meta.url));
 setTimeout(() => {
@@ -413,9 +415,9 @@ const Cell: FC<CellProps> = ({ x, y, size, height, maxHeight, color, border }) =
 
 export default function App() {
   const [message, setMessage] = useState<any>({});
-  const [colorR, setColorR] = useState<number>(Math.floor(Math.random() * 255));
-  const [colorG, setColorG] = useState<number>(Math.floor(Math.random() * 255));
-  const [colorB, setColorB] = useState<number>(Math.floor(Math.random() * 255));
+  const [colorR, setColorR] = useState<number>(Math.floor(Math.random()));
+  const [colorG, setColorG] = useState<number>(Math.floor(Math.random()));
+  const [colorB, setColorB] = useState<number>(Math.floor(Math.random()));
   useEffect(() => {
     worker.onmessage = (message: MessageEvent) => {
       if (message?.data?.command === 'progress' && message?.data?.label == 'train:iterator') {
@@ -479,14 +481,20 @@ export default function App() {
   const b2 = message?.data?.weights?.b2 as number[] | undefined;
 
   if (W1 && b1 && W2 && b2) {
-    const rgb = [colorR, colorG, colorB];
+    const rgb = [colorR / 255.0, colorG / 255.0, colorB / 255.0];
     const input_layer = 3;
     const hidden_layer = 4;
     const output_layer = 10;
     const max_layer_height = Math.max(input_layer, hidden_layer, output_layer);
+    const answers = predict(rgb, message?.data?.weights);
     return (
       <div>
         <DLGraph weights={message?.data?.weights} layersCount={2} inputs={rgb} />
+        {COLOR_INDEX_LABEL.map((label, idx) => (
+          <div>
+            {label}: {(answers[idx] * 100).toFixed(2)}%
+          </div>
+        ))}
         <hr />
         {form}
         <hr />

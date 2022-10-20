@@ -41,6 +41,7 @@ export const Tooltip = ({ x, y, width, lineHeight, arrow, text }: TooltipProps) 
           fontFamily="monospace"
           fontSize={12}
           fontWeight="normal"
+          key={`text-${lineNo}`}
         >
           {line}
         </text>
@@ -139,9 +140,9 @@ export const PlusIcon = ({ x, y, size, stroke }: IconProps) => (
     viewBox="0 0 24 24"
     fill="none"
     stroke={stroke ?? 'currentColor'}
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
   >
     <line x1="12" y1="5" x2="12" y2="19" />
     <line x1="5" y1="12" x2="19" y2="12" />
@@ -157,9 +158,9 @@ export const RightArrowIcon = ({ x, y, size, stroke = 'currentColor' }: IconProp
     viewBox="0 0 24 24"
     fill="none"
     stroke={stroke}
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
   >
     <line x1="5" y1="12" x2="19" y2="12" />
     <polyline points="12 5 19 12 12 19" />

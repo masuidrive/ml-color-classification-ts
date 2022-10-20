@@ -1,5 +1,8 @@
 import { COLOR_INDEX_LABEL, TRAIN_DATA, TEST_DATA } from "../dataset";
 
+const times = (n: number, callbackfn: (index: number) => number[] | number | void) =>
+    [...Array(n)].map((_: any, index: number) => callbackfn(index));
+
 // 親に進捗を送る
 const progress = (label: string, data?: any) => {
     self.postMessage({ command: "progress", label, data })
@@ -64,12 +67,6 @@ const product_1d_number = (x: number[], val: number): number[] =>
 const product_2d_number = (x: number[][], val: number): number[][] =>
     x.map((xx) => product_1d_number(xx, val));
 
-/// 1次元配列と2次元配列の内積(ドット積)を求める
-const dot_produce_1d_2d = (x: number[], y: number[][]): number[] =>
-    [...Array(y[0].length)].map((_, w1i) =>
-        sum_1d(x.map((xx, i) => xx * y[i][w1i]))
-    );
-
 // 2次元配列をmapする
 const map_2d = (x: number[][], func: (val: number, idx: number, idx2: number) => number): number[][] =>
     x.map((xx, xxi) => xx.map((xxx, xxxi) => func(xxx, xxxi, xxi)));
@@ -101,13 +98,21 @@ const numerical_gradient_2d = (loss_func: any, x: number[][]) => {
 }
 
 /// weightsとxから推測された1次元配列を返す
-const predict = (x: number[], weights: any): number[] => {
+export const predict = (x: number[], weights: any): number[] => {
     // x.shape,W1.shape,b1.shape,a1.shape,
     // shape  x(3), W1(3, 30), b1(30,), a1(100, 30)
-    const a1 = add_1d(dot_produce_1d_2d(x, weights.W1), weights.b1);
+    //const a1 = add_1d(dot_produce_1d_2d(x, weights.W1), weights.b1);
+    const a1 = times(weights.W1[0].length, (w1i) =>
+        sum_1d(x.map((xx, i) => xx * weights.W1[i][w1i] + weights.b1[i])
+        )) as number[];
     const z1 = relu_1d(a1);
-    const a2 = add_1d(dot_produce_1d_2d(z1, weights.W2), weights.b2);
+    const a2 = times(weights.W2[0].length, (w2i) =>
+        sum_1d(z1.map((xx, i) => xx * weights.W2[i][w2i] + weights.b2[i])
+        )) as number[];
+    //const a2 = add_1d(dot_produce_1d_2d(z1, weights.W2), weights.b2);
     const y = softmax_1d(a2);
+    if (typeof window != "undefined")
+        console.log("a1", a1, "a2", a2, "softmax", y);
 
     return y;
 }
@@ -150,7 +155,7 @@ const accuracy = (x: number[][], t: number[], weights: any) => {
 }
 
 export function train() {
-    const iters_num = 1000;
+    const iters_num = 3000;
     const hidden_size = 4;
 
     const train_size = TRAIN_DATA.length;
@@ -158,7 +163,7 @@ export function train() {
     const output_size = COLOR_INDEX_LABEL.length;
 
     const batch_size = 10;
-    const learning_rate = 0.001;
+    const learning_rate = 0.1;
 
     const weight_init_std = 0.01;
     let weights: { [key: string]: number[][] | number[] } = {
