@@ -1,7 +1,8 @@
 import { FC, ReactNode, useState } from 'react';
-import { Line, Rect, Circle, Tooltip, PlusIcon, RightArrowIcon } from './svg';
+import { Line, Rect, Circle, Text, Tooltip, PlusIcon, RightArrowIcon } from './svg';
 import { num2color } from '../utils/color';
 import { clone, times } from '../utils/array';
+import { COLOR_INDEX_LABEL } from '../dataset';
 
 const layerFunc = ['relu', 'softmax'];
 
@@ -9,8 +10,6 @@ type DLGraphProps = { weights: any; layersCount: number; inputs: number[] };
 export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
   const cellSize = 16;
   const [tooltip, setTooltip] = useState<any>(undefined);
-
-  //console.log('predict', predict(inputs, weights));
 
   const input_layer = weights['W1'].length;
   const output_layer = weights[`W${layersCount - 1}`][0].length;
@@ -154,6 +153,7 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
         );
         data[y] = data[y] / base;
       });
+      posX += 4;
     } else {
       times(neuronCount, (y) => {
         const sum = calculated.map((val) => val[y]).reduce((a, b) => a + b);
@@ -177,6 +177,35 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
     }
   });
 
+  posX -= 2;
+  const fontSize = 12;
+  const labels = COLOR_INDEX_LABEL.map((label, idx) => (
+    <>
+      <Text
+        key={`l-${idx}`}
+        x={cX(posX)}
+        y={cY(idx, COLOR_INDEX_LABEL.length) - (cellSize - fontSize) / 2}
+        text={`${(data[idx] * 100).toFixed(0)}%`}
+        fontSize={fontSize}
+        width={cellSize * 13}
+        height={cellSize}
+        align="bottom"
+        color="black"
+      />
+      <Text
+        key={`v-${idx}`}
+        x={cX(posX + 2.5)}
+        y={cY(idx, COLOR_INDEX_LABEL.length) - (cellSize - fontSize) / 2}
+        text={label}
+        fontSize={fontSize}
+        width={cellSize * 10}
+        height={cellSize}
+        align="bottom"
+        color="black"
+      />
+    </>
+  ));
+
   const width = 800;
   const height = 400;
   return (
@@ -195,6 +224,7 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
         <path d="M 0 0 L 10 5 L 0 10 z" fill="#aaaaaa" />
       </marker>
       {elements}
+      {labels}
       {tooltip === undefined ? undefined : (
         <Tooltip
           x={tooltip.x}

@@ -105,13 +105,18 @@ type TextProps = {
   fontSize: number;
   text: string;
   color: string;
-  align?: string;
+  align: 'middle' | 'bottom';
 };
-export const Text = ({ x, y, width, height, fontSize, text, color, align }: TextProps) => (
-  <text x={x - width / 2} y={y - height / 2}>
-    {text}
-  </text>
-);
+export const Text = ({ x, y, width, height, fontSize, text, color, align = 'middle' }: TextProps) =>
+  align === 'bottom' ? (
+    <text x={x} y={y + height / 2}>
+      {text}
+    </text>
+  ) : (
+    <text x={x} y={y - height / 2}>
+      {text}
+    </text>
+  );
 
 type CircleProps = {
   x: number;
