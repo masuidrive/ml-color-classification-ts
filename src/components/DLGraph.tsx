@@ -1,15 +1,11 @@
 import { FC, ReactNode, useState } from 'react';
 import { Line, Rect, Circle, Tooltip, PlusIcon, RightArrowIcon } from './svg';
-
-const times = (n: number, callbackfn: (index: number) => number[] | number | void) =>
-  [...Array(n)].map((_: any, index: number) => callbackfn(index));
-const clone = (data: any) => JSON.parse(JSON.stringify(data));
-
-const num2color = (val: number) =>
-  `rgb(${(val > 0 ? [1 - val, 1, 1 - val] : [1 + val, 1 + val, 1]).map((v) => v * 255).join(',')})`;
-type DLGraphProps = { weights: any; layersCount: number; inputs: number[] };
+import { num2color } from '../utils/color';
+import { clone, times } from '../utils/array';
 
 const layerFunc = ['relu', 'softmax'];
+
+type DLGraphProps = { weights: any; layersCount: number; inputs: number[] };
 export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
   const cellSize = 16;
   const [tooltip, setTooltip] = useState<any>(undefined);
@@ -105,10 +101,10 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
             onHideTooltip={() => setTooltip(undefined)}
             tooltip={[
               `f(x) = x * W[${y},${x}] + b[${x}]`,
-              `x = ${data[x]}`,
-              `W[${y},${x}] = ${val}`,
-              `b[${x}] = ${bias}`,
-              `result = ${calculated[x][y]}`,
+              `x = ${data[x].toFixed(16)}`,
+              `W[${y},${x}] = ${val.toFixed(16)}`,
+              `b[${x}] = ${bias.toFixed(16)}`,
+              `result = ${calculated[x][y].toFixed(16)}`,
             ]}
           />,
         );
@@ -149,7 +145,11 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
             key={`${posX}-${y}`}
             onShowTooltip={(x, y, text) => setTooltip({ x, y: y + cellSize / 2 + 2, text })}
             onHideTooltip={() => setTooltip(undefined)}
-            tooltip={['f(x) = exp(x) / total', `x = ${data[y]}`, `result = ${data[y] / base}`]}
+            tooltip={[
+              'f(x) = exp(x) / total',
+              `x = ${data[y].toFixed(16)}`,
+              `result = ${(data[y] / base).toFixed(16)}`,
+            ]}
           />,
         );
         data[y] = data[y] / base;
@@ -170,7 +170,7 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
             key={`${posX}-${y}`}
             onShowTooltip={(x, y, text) => setTooltip({ x, y: y + cellSize / 2 + 2, text })}
             onHideTooltip={() => setTooltip(undefined)}
-            tooltip={['f(x) = x > 0 ? x : 0', `x = ${sum}`, `result = ${data[y]}`]}
+            tooltip={['f(x) = x > 0 ? x : 0', `x = ${sum.toFixed(16)}`, `result = ${data[y].toFixed(16)}`]}
           />,
         );
       });

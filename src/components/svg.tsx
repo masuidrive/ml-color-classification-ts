@@ -118,14 +118,11 @@ type CircleProps = {
   y: number;
   radius: number;
   fill: string;
-  title?: string;
   borderColor?: string;
   style?: any;
 };
-export const Circle = ({ x, y, fill, radius, borderColor, title, style }: CircleProps) => (
-  <circle cx={x} cy={y} r={radius} style={{ fill, stroke: borderColor, strokeWidth: 2, ...style }}>
-    <title>{title}</title>
-  </circle>
+export const Circle = ({ x, y, fill, radius, borderColor, style }: CircleProps) => (
+  <circle cx={x} cy={y} r={radius} style={{ ...style, fill, stroke: borderColor, strokeWidth: 2 }}></circle>
 );
 
 // https://feathericons.com/

@@ -101,7 +101,6 @@ const numerical_gradient_2d = (loss_func: any, x: number[][]) => {
 export const predict = (x: number[], weights: any): number[] => {
     // x.shape,W1.shape,b1.shape,a1.shape,
     // shape  x(3), W1(3, 30), b1(30,), a1(100, 30)
-    //const a1 = add_1d(dot_produce_1d_2d(x, weights.W1), weights.b1);
     const a1 = times(weights.W1[0].length, (w1i) =>
         sum_1d(x.map((xx, i) => xx * weights.W1[i][w1i] + weights.b1[i])
         )) as number[];
@@ -109,7 +108,6 @@ export const predict = (x: number[], weights: any): number[] => {
     const a2 = times(weights.W2[0].length, (w2i) =>
         sum_1d(z1.map((xx, i) => xx * weights.W2[i][w2i] + weights.b2[i])
         )) as number[];
-    //const a2 = add_1d(dot_produce_1d_2d(z1, weights.W2), weights.b2);
     const y = softmax_1d(a2);
 
     return y;
