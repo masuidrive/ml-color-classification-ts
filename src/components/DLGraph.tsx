@@ -8,6 +8,7 @@ const layerFunc = ['relu', 'softmax'];
 
 type DLGraphProps = { weights: any; layersCount: number; inputs: number[] };
 export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
+  const fontSize = 12;
   const cellSize = 16;
   const [tooltip, setTooltip] = useState<any>(undefined);
 
@@ -24,6 +25,26 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
 
   let elements: ReactNode[] = [];
   let posX = 0;
+
+  // 入力レイヤー
+  inputs.forEach((val, i) => {
+    const color = inputs.map((_, j) => (i == j ? 1 : 1 - val));
+    const borderColor = inputs.map((_, j) => (i == j ? 1 : 0.75));
+    elements.push(
+      <Text
+        key={`v-${i}`}
+        x={cX(posX)}
+        y={cY(i, inputs.length) - (cellSize - fontSize) / 2}
+        text={val.toFixed(3)}
+        fontSize={fontSize}
+        width={cellSize * 3}
+        height={cellSize}
+        align="bottom"
+        color="black"
+      />,
+    );
+  });
+  posX += 4;
 
   // 入力レイヤー → hidden layer
   const hidden_height = weights[`W1`][0].length as number;
@@ -178,14 +199,13 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
   });
 
   posX -= 2;
-  const fontSize = 12;
   const labels = COLOR_INDEX_LABEL.map((label, idx) => (
     <>
       <Text
         key={`l-${idx}`}
         x={cX(posX)}
         y={cY(idx, COLOR_INDEX_LABEL.length) - (cellSize - fontSize) / 2}
-        text={`${(data[idx] * 100).toFixed(0)}%`}
+        text={`${data[idx].toFixed(3)}`}
         fontSize={fontSize}
         width={cellSize * 13}
         height={cellSize}
@@ -194,7 +214,7 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
       />
       <Text
         key={`v-${idx}`}
-        x={cX(posX + 2.5)}
+        x={cX(posX + 3)}
         y={cY(idx, COLOR_INDEX_LABEL.length) - (cellSize - fontSize) / 2}
         text={label}
         fontSize={fontSize}
