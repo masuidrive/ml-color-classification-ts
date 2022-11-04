@@ -153,31 +153,34 @@ export default function App() {
     const max_layer_height = Math.max(input_layer, hidden_layer, output_layer);
     const answers = predict(rgb, message?.data?.weights);
     return (
-      <div>
-        {form}
-        <DLGraph weights={message?.data?.weights} layersCount={2} inputs={rgb} />
-        <div className="grid grid-cols-[200px_200px_minmax(900px,_1fr)]">
-          {COLOR_INDEX_LABEL.map((label, idx) => (
-            <>
-              <Progress value={answers[idx] * 100} max={100} key={`p-${idx}`} />
-              <div key={`l-${idx}`}>{label}:</div>
-              <div key={`v-${idx}`}> {(answers[idx] * 100).toFixed(2)}%</div>
-            </>
-          ))}
+      <div className="lg:container lg:mx-auto">
+        <div style={{ margin: '0 auto' }}>
+          ここに機械学習の説明を入れます
+          <div className="flex flex-row">
+            <div className="basis-1/7">01</div>
+            <div className="basis-2/7">02</div>
+            <div className="basis-2/7">03</div>
+            <div className="basis-2/7">04</div>
+          </div>
+
+          <div style={{ position: 'sticky', top: '0px', backgroundColor: "white" }}>
+            {form}
+            <DLGraph weights={message?.data?.weights} layersCount={2} inputs={rgb} />
+          </div>
+          <hr />
+          W1
+          <ColorMatrix2D matrix={W1} rotate={true} />
+          <br />
+          b1
+          <ColorMatrix1D vector={b1.map((v) => v * 20)} />
+          <br />
+          W2
+          <ColorMatrix2D matrix={W2} rotate={true} />
+          <br />
+          b2
+          <ColorMatrix1D vector={b2.map((v) => v * 20)} />
         </div>
-        <hr />
-        W1
-        <ColorMatrix2D matrix={W1} rotate={true} />
-        <br />
-        b1
-        <ColorMatrix1D vector={b1.map((v) => v * 20)} />
-        <br />
-        W2
-        <ColorMatrix2D matrix={W2} rotate={true} />
-        <br />
-        b2
-        <ColorMatrix1D vector={b2.map((v) => v * 20)} />
-        <div>{JSON.stringify(message)}</div>
+        <div style={{ marginBottom: '1024px' }}>ここには次の単元が入ります</div>
       </div>
     );
   } else {

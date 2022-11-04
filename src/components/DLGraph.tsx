@@ -226,10 +226,10 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
     </>
   ));
 
-  const width = 800;
-  const height = 400;
+  const width = 1000;
+  const height = max_layer_height * cellSize * 2;
   return (
-    <svg width={width} height={height} xmlns="http://www.w3.org/2000/svg">
+    <svg width="100%" viewBox={`0,0,${width},${height}`} style={{ objectFit:"cover" }} xmlns="http://www.w3.org/2000/svg">
       <marker
         id="arrow"
         viewBox="0 0 10 10"
