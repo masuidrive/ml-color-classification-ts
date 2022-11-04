@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 .App {
-  font-family: "IBM Plex Sans";
+  font-family: 'IBM Plex Sans';
 }
 
 .range-red {

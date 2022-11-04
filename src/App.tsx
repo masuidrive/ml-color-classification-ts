@@ -1,6 +1,5 @@
 import { FC, useEffect, useState } from 'react';
-// import { Text, Line, Circle, Rect, Layer, Stage } from "react-konva";
-import { Range, Progress } from 'react-daisyui';
+import { Range, Progress, Divider } from 'react-daisyui';
 import { DLGraph } from './components/DLGraph';
 import { predict } from './workers';
 import { COLOR_INDEX_LABEL } from './dataset';
@@ -102,40 +101,12 @@ export default function App() {
   const form = (
     <div>
       <div className="grid grid-rows-3 grid-flow-col gap-2 grid-cols-[48px_2em_1fr]">
-        <div className="row-span-3" style={{ backgroundColor: `rgb(${colorR}, ${colorG}, ${colorB})` }}></div>
         <div className="text-right text-sm">{colorR}</div>
         <div className="text-right text-sm">{colorG}</div>
         <div className="text-right text-sm">{colorB}</div>
-        <div>
-          <Range
-            value={colorR}
-            min={0}
-            max={255}
-            onChange={(e) => setColorR(parseInt(e.target.value, 10))}
-            size="xs"
-            className="range-red"
-          />
-        </div>
-        <div>
-          <Range
-            value={colorG}
-            min={0}
-            max={255}
-            onChange={(e) => setColorG(parseInt(e.target.value, 10))}
-            size="xs"
-            className="range-green"
-          />
-        </div>
-        <div>
-          <Range
-            value={colorB}
-            min={0}
-            max={255}
-            onChange={(e) => setColorB(parseInt(e.target.value, 10))}
-            size="xs"
-            className="range-blue"
-          />
-        </div>
+        <div></div>
+        <div></div>
+        <div></div>
       </div>
     </div>
   );
@@ -156,16 +127,8 @@ export default function App() {
       <div className="lg:container lg:mx-auto">
         <div style={{ margin: '0 auto' }}>
           ここに機械学習の説明を入れます
-          <div className="flex flex-row">
-            <div className="basis-1/7">01</div>
-            <div className="basis-2/7">02</div>
-            <div className="basis-2/7">03</div>
-            <div className="basis-2/7">04</div>
-          </div>
-
-          <div style={{ position: 'sticky', top: '0px', backgroundColor: "white" }}>
-            {form}
-            <DLGraph weights={message?.data?.weights} layersCount={2} inputs={rgb} />
+          <div style={{ position: 'sticky', top: '0px', backgroundColor: 'white' }}>
+            <DLGraph weights={message?.data?.weights} layersCount={2} />
           </div>
           <hr />
           W1

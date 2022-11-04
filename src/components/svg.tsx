@@ -60,6 +60,7 @@ type RectProps = {
   y: number;
   width: number;
   height: number;
+  align?: 'center';
   fill: string;
   borderColor?: string;
   tooltip?: string | string[];
@@ -73,6 +74,7 @@ export const Rect = ({
   width,
   height,
   fill,
+  align,
   borderColor,
   tooltip,
   onShowTooltip,
@@ -80,8 +82,8 @@ export const Rect = ({
   onToggleTooltip,
 }: RectProps) => (
   <rect
-    x={x - width / 2}
-    y={y - height / 2}
+    x={align === undefined ? x : x - width / 2}
+    y={align === undefined ? y : y - height / 2}
     width={width}
     height={height}
     style={{ fill, stroke: borderColor, strokeWidth: 1 }}
@@ -100,20 +102,20 @@ export const Rect = ({
 type TextProps = {
   x: number;
   y: number;
-  width: number;
   height: number;
   fontSize: number;
+  fontWeight?: 'bold' | 'normal';
   text: string;
   color: string;
   align: 'middle' | 'bottom';
 };
-export const Text = ({ x, y, width, height, fontSize, text, color, align = 'middle' }: TextProps) =>
+export const Text = ({ x, y, height, fontSize, fontWeight, text, color, align = 'middle' }: TextProps) =>
   align === 'bottom' ? (
-    <text x={x} y={y + height / 2}>
+    <text x={x} y={y + height / 2} style={{ fontWeight: fontWeight ?? 'normal', fill: color, fontSize }}>
       {text}
     </text>
   ) : (
-    <text x={x} y={y - height / 2}>
+    <text x={x} y={y - height / 2} style={{ fontWeight: fontWeight ?? 'normal', fill: color, fontSize }}>
       {text}
     </text>
   );

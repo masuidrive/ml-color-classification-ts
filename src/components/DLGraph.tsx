@@ -1,16 +1,22 @@
-import { FC, ReactNode, useState } from 'react';
-import { Line, Rect, Circle, Text, Tooltip, PlusIcon, RightArrowIcon } from './svg';
-import { num2color } from '../utils/color';
+import { ReactNode, useState } from 'react';
+import { Range } from 'react-daisyui';
+import { Line, Rect, Text, Tooltip, PlusIcon, RightArrowIcon } from './svg';
+import { num2color, num2gray } from '../utils/color';
 import { clone, times } from '../utils/array';
 import { COLOR_INDEX_LABEL } from '../dataset';
 
 const layerFunc = ['relu', 'softmax'];
+const rangeHeight = 20;
 
-type DLGraphProps = { weights: any; layersCount: number; inputs: number[] };
-export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
+/// 1次元配列の一番大きな値のインデックス値
+const argmax_1d = (vector: number[]) => vector.map((val, i) => [val, i]).reduce((r, a) => (a[0] > r[0] ? a : r))[1];
+
+type DLGraphProps = { weights: any; layersCount: number };
+export const DLGraph = ({ weights, layersCount }: DLGraphProps) => {
   const fontSize = 12;
   const cellSize = 16;
   const [tooltip, setTooltip] = useState<any>(undefined);
+  const [inputs, setInputs] = useState<number[]>(times(3, (_) => Math.random()) as number[]);
 
   const input_layer = weights['W1'].length;
   const output_layer = weights[`W${layersCount - 1}`][0].length;
@@ -25,26 +31,8 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
 
   let elements: ReactNode[] = [];
   let posX = 0;
-
-  // 入力レイヤー
-  inputs.forEach((val, i) => {
-    const color = inputs.map((_, j) => (i == j ? 1 : 1 - val));
-    const borderColor = inputs.map((_, j) => (i == j ? 1 : 0.75));
-    elements.push(
-      <Text
-        key={`v-${i}`}
-        x={cX(posX)}
-        y={cY(i, inputs.length) - (cellSize - fontSize) / 2}
-        text={val.toFixed(3)}
-        fontSize={fontSize}
-        width={cellSize * 3}
-        height={cellSize}
-        align="bottom"
-        color="black"
-      />,
-    );
-  });
-  posX += 4;
+  const rangeWidth = 5;
+  const weightMargin = 6;
 
   // 入力レイヤー → hidden layer
   const hidden_height = weights[`W1`][0].length as number;
@@ -53,9 +41,9 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
     times(hidden_height, (y) => {
       elements.push(
         <Line
-          x1={cX(posX)}
+          x1={cX(posX + rangeWidth)}
           y1={cY(color, input_layer)}
-          x2={cX(posX + color * 3 + 6) - cellSize * 0.5 - 2}
+          x2={cX(posX + color * 3 + weightMargin + rangeWidth) - cellSize * 0.5 - 2}
           y2={cY(y, hidden_height)}
           color={`rgb(${lineColor.map((v) => v * 255).join(',')})`}
         />,
@@ -64,20 +52,45 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
   });
 
   // 入力レイヤー
+  const rangeColor = ['red', 'green', 'blue'];
   inputs.forEach((val, i) => {
-    const color = inputs.map((_, j) => (i == j ? 1 : 1 - val));
-    const borderColor = inputs.map((_, j) => (i == j ? 1 : 0.75));
     elements.push(
-      <Circle
+      <foreignObject
         x={cX(posX)}
-        y={cY(i, input_layer)}
-        radius={cellSize / 2}
-        borderColor={`rgb(${(val < 0.25 ? borderColor : color).map((v) => v * 255).join(',')})`}
-        fill={`rgb(${color.map((v) => v * 255).join(',')})`}
-        key={`${posX}-${i}`}
-      />,
+        y={cY(i, inputs.length) - rangeHeight / 2}
+        width={cellSize * rangeWidth}
+        height={rangeHeight}
+      >
+        <Range
+          value={val * 255}
+          min={0}
+          max={255}
+          style={{ width: cellSize * rangeWidth }}
+          onChange={(e) => {
+            const val = parseInt(e.target.value, 10) / 255;
+            let newInputs = [...inputs];
+            newInputs[i] = val;
+            setInputs(newInputs);
+          }}
+          size="xs"
+          className={`range-${rangeColor[i]}`}
+          key={`inputs-${i}`}
+        />
+      </foreignObject>,
     );
   });
+  elements.push(
+    <Rect
+      x={cX(0)}
+      y={cY(0, inputs.length) - cellSize * 4}
+      width={cellSize * rangeWidth}
+      height={cellSize * 2.5}
+      fill={`rgb(${inputs.map((v) => v * 255).join(',')})`}
+      borderColor="#eeeeee"
+      key={`color-sample`}
+    />,
+  );
+  posX += rangeWidth;
 
   // レイヤー
   let data = clone(inputs);
@@ -91,7 +104,7 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
             <Line
               x1={cX(posX) + cellSize / 2}
               y1={cY(i, layer1Count)}
-              x2={cX(posX + i * 3 + 6) - cellSize * 0.5 - 2}
+              x2={cX(posX + i * 3 + weightMargin) - cellSize * 0.5 - 2}
               y2={cY(j, layer2Count)}
               color={`#aaaaaa`}
             />,
@@ -99,7 +112,7 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
         });
       });
     }
-    posX += 6;
+    posX += weightMargin;
 
     const w = weights[`W${layerNo + 1}`] as number[][];
     const calculated = clone(w) as number[][];
@@ -114,6 +127,7 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
             y={cY(y, row.length)}
             width={cellSize}
             height={cellSize}
+            align="center"
             fill={num2color(calculated[x][y])}
             borderColor="#aaaaaa"
             key={`${posX}-${x}-${y}`}
@@ -160,6 +174,7 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
             y={cY(y, neuronCount)}
             width={cellSize}
             height={cellSize}
+            align="center"
             fill={num2color(data[y] / base)}
             borderColor="#aaaaaa"
             key={`${posX}-${y}`}
@@ -186,12 +201,13 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
             y={cY(y, neuronCount)}
             width={cellSize}
             height={cellSize}
+            align="center"
             fill={num2color(data[y])}
             borderColor="#aaaaaa"
             key={`${posX}-${y}`}
             onShowTooltip={(x, y, text) => setTooltip({ x, y: y + cellSize / 2 + 2, text })}
             onHideTooltip={() => setTooltip(undefined)}
-            tooltip={['f(x) = x > 0 ? x : 0', `x = ${sum.toFixed(16)}`, `result = ${data[y].toFixed(16)}`]}
+            tooltip={['f(x) = max(0, x)', `x = ${sum.toFixed(16)}`, `result = ${data[y].toFixed(16)}`]}
           />,
         );
       });
@@ -199,6 +215,7 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
   });
 
   posX -= 2;
+  const resultIndex = argmax_1d(data);
   const labels = COLOR_INDEX_LABEL.map((label, idx) => (
     <>
       <Text
@@ -207,7 +224,6 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
         y={cY(idx, COLOR_INDEX_LABEL.length) - (cellSize - fontSize) / 2}
         text={`${data[idx].toFixed(3)}`}
         fontSize={fontSize}
-        width={cellSize * 13}
         height={cellSize}
         align="bottom"
         color="black"
@@ -217,11 +233,11 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
         x={cX(posX + 3)}
         y={cY(idx, COLOR_INDEX_LABEL.length) - (cellSize - fontSize) / 2}
         text={label}
-        fontSize={fontSize}
-        width={cellSize * 10}
+        fontSize={14}
         height={cellSize}
         align="bottom"
-        color="black"
+        color={num2gray((1 - data[idx]) * 0.8)}
+        fontWeight={idx === resultIndex ? 'bold' : 'normal'}
       />
     </>
   ));
@@ -229,7 +245,12 @@ export const DLGraph = ({ weights, layersCount, inputs }: DLGraphProps) => {
   const width = 1000;
   const height = max_layer_height * cellSize * 2;
   return (
-    <svg width="100%" viewBox={`0,0,${width},${height}`} style={{ objectFit:"cover" }} xmlns="http://www.w3.org/2000/svg">
+    <svg
+      width="100%"
+      viewBox={`0,0,${width},${height}`}
+      style={{ objectFit: 'cover' }}
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <marker
         id="arrow"
         viewBox="0 0 10 10"

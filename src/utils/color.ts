@@ -1,6 +1,8 @@
 export const num2color = (val: number) =>
     `rgb(${(val > 0 ? [1 - val, 1, 1 - val] : [1 + val, 1 + val, 1 + val]).map((v) => v * 255).join(',')})`;
 
+export const num2gray = (val: number) =>
+    `rgb(${[val, val, val].map((v) => v * 255).join(',')})`;
 
 // Copyright 2019 Google LLC. / SPDX-License-Identifier: Apache-2.0 / Author: Anton Mikhailov
 const turbo_colormap_data = [
