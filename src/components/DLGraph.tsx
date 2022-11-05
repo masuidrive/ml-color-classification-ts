@@ -62,7 +62,7 @@ export const DLGraph = ({ weights, layersCount }: DLGraphProps) => {
         height={rangeHeight}
         color={rangeColor[i]}
         value={val}
-        onChange={(val) => {
+        onChange={(val: any) => {
           let newInputs = [...inputs];
           newInputs[i] = val;
           setInputs(newInputs);
