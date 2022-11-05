@@ -113,11 +113,15 @@ type TextProps = {
 };
 export const Text = ({ x, y, height, fontSize, fontWeight, text, color, align = 'middle' }: TextProps) =>
   align === 'bottom' ? (
-    <text x={x} y={y + height / 2} style={{ fontWeight: fontWeight ?? 'normal', fill: color, fontSize }}>
+    <text x={x} y={y} style={{ fontWeight: fontWeight ?? 'normal', fill: color, fontSize }}>
       {text}
     </text>
   ) : (
-    <text x={x} y={y - height / 2} style={{ fontWeight: fontWeight ?? 'normal', fill: color, fontSize }}>
+    <text
+      x={x}
+      y={y - height / 2}
+      style={{ dominantBaseline: 'middle', fontWeight: fontWeight ?? 'normal', fill: color, fontSize }}
+    >
       {text}
     </text>
   );

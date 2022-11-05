@@ -1,3 +1,4 @@
-export const times = (n: number, callbackfn: (index: number) => number[] | number | void) =>
+export const times = <T>(n: number, callbackfn: (index: number) => T) =>
     [...Array(n)].map((_: any, index: number) => callbackfn(index));
-export const clone = (data: any) => JSON.parse(JSON.stringify(data));
+
+export const clone = <T>(data: T) => JSON.parse(JSON.stringify(data)) as T;

@@ -1,5 +1,4 @@
-import { ReactNode, useState } from 'react';
-import { Range } from 'react-daisyui';
+import React, { ReactNode, useState } from 'react';
 import { Line, Rect, Text, Tooltip, PlusIcon, RightArrowIcon, Slider } from './svg';
 import { num2color, num2gray } from '../utils/color';
 import { clone, times } from '../utils/array';
@@ -8,15 +7,206 @@ import { COLOR_INDEX_LABEL } from '../dataset';
 const layerFunc = ['relu', 'softmax'];
 const rangeHeight = 20;
 
+type DLGraphProps = { weights: any; layersCount: number };
+type DLGraphStates = { inputs: number[] };
+export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
+  // グラフのサイズとか
+  fontSize = 12;
+  cellSize = 16;
+
+  inputNeuronCount = 3; // 入力は3次元
+  layerMargin = 4; // レイヤー間の隙間
+  numberCellCount = 3; // 数字を表示するセル数
+  inputSliderWidth = 5; // 入力のセル数
+  layerWidths = [] as number[]; // レイヤー毎の幅
+
+  neuronCounts = [] as number[]; // 各レイヤーのニューロン数
+  maxNeuronCount = 0; // 一番大きいレイヤーのニューロン数
+
+  constructor(props: DLGraphProps) {
+    super(props);
+    this.state = { inputs: times(this.inputNeuronCount, (_) => Math.random()) };
+    this.neuronCounts = times(props.layersCount, (i) => props.weights[`b${i + 1}`].length as number);
+    this.maxNeuronCount = Math.max(...this.neuronCounts);
+    this.layerWidths = [
+      this.inputSliderWidth + 0.5 + this.numberCellCount,
+      ...times(
+        props.layersCount,
+        (i) => (props.weights[`W${i + 1}`].length as number) * 3 + 1 + this.numberCellCount /* bias */,
+      ),
+    ];
+  }
+
+  cX(x: number) {
+    return x * this.cellSize + this.cellSize;
+  }
+
+  cY(y: number, height: number) {
+    return (y + (this.maxNeuronCount - height) / 2) * 2 * this.cellSize + this.cellSize;
+  }
+
+  render() {
+    const width = 1000;
+    const height = this.maxNeuronCount * this.cellSize * 2 + 2;
+    return (
+      <svg
+        width="100%"
+        viewBox={`0,0,${width},${height}`}
+        style={{ objectFit: 'cover' }}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {this.renderArrows()}
+        {this.renderInputs()}
+        {this.renderFuncs()}
+      </svg>
+    );
+  }
+
+  // 入力の線を一番下に引く
+  renderArrows() {
+    let elements: ReactNode[] = [];
+
+    const heights = [this.inputNeuronCount, ...this.neuronCounts];
+    let layerX = 0;
+    times(this.props.layersCount, (layerNo) => {
+      layerX += this.layerWidths[layerNo];
+      times(heights[layerNo], (i) => {
+        // inputレイヤーだけRGBで線を引く
+        const lineColor = layerNo === 0 ? times(this.inputNeuronCount, (j) => (i == j ? 192 : 0)) : [192, 192, 192];
+        times(heights[layerNo + 1], (y) => {
+          elements.push(
+            <Line
+              x1={this.cX(layerX - 0.5)}
+              y1={this.cY(i, heights[layerNo])}
+              x2={this.cX(layerX + this.layerMargin + i * 3) - this.cellSize * 0.5 - 2}
+              y2={this.cY(y, heights[layerNo + 1])}
+              color={`rgb(${lineColor.join(',')})`}
+              key={`input-arrow-${layerNo}-${i}-${y}`}
+            />,
+          );
+        });
+      });
+      layerX += this.layerMargin;
+    });
+
+    return elements;
+  }
+
+  // 入力の箱
+  renderInputs() {
+    let elements: ReactNode[] = [];
+    const rangeColor = ['#880000', '#008800', '#000088'];
+    this.state.inputs.forEach((val, i) => {
+      elements.push(
+        <Slider
+          x={this.cX(0)}
+          y={this.cY(i, this.inputNeuronCount) - this.cellSize / 2}
+          width={this.cellSize * this.inputSliderWidth}
+          height={this.cellSize}
+          color={rangeColor[i]}
+          value={val}
+          onChange={(val: any) => {
+            let newInputs = [...this.state.inputs];
+            newInputs[i] = val;
+            this.setState({ inputs: newInputs });
+          }}
+          key={`input-slider-${i}`}
+        />,
+        <Text
+          x={this.cX(this.inputSliderWidth + 0.5)}
+          y={this.cY(i, this.inputNeuronCount) + this.cellSize / 2}
+          text={`${this.state.inputs[i].toFixed(3)}`}
+          fontSize={this.fontSize}
+          height={this.cellSize}
+          align="middle"
+          color="black"
+          key={`input-text-${i}`}
+        />,
+      );
+    });
+    return elements;
+  }
+
+  // 計算の箱
+  renderFuncs() {
+    let elements: ReactNode[] = [];
+    let layerX = 0;
+    let data = this.state.inputs;
+    times(this.props.layersCount, (layerNo) => {
+      layerX += this.layerWidths[layerNo] + this.layerMargin;
+
+      const weights = this.props.weights[`W${layerNo + 1}`] as number[][];
+      let calculated = clone(weights); // 同じサイズの配列を作りたいだけ
+
+      // ブロックを書く
+      weights.forEach((row, x) =>
+        row.forEach((val, y) => {
+          const bias = this.props.weights[`b${layerNo + 1}`][x] as number;
+          calculated[x][y] = data[x] * val + bias;
+          elements.push(
+            <Rect
+              x={this.cX(layerX + x * 3)}
+              y={this.cY(y, row.length)}
+              width={this.cellSize}
+              height={this.cellSize}
+              align="center"
+              fill={num2color(calculated[x][y])}
+              borderColor="#aaaaaa"
+              key={`func-${layerNo}-${x}-${y}`}
+              onShowTooltip={(x, y, text) => null} // setTooltip({ x, y: y + cellSize / 2 + 2, text })}
+              onHideTooltip={() => null} //setTooltip(undefined)}
+            />,
+          );
+        }),
+      );
+
+      times(this.neuronCounts[layerNo], (y) =>
+        elements.push(
+          <Rect
+            x={this.cX(layerX + weights.length * 3)}
+            y={this.cY(y, this.neuronCounts[layerNo])}
+            width={this.cellSize}
+            height={this.cellSize}
+            align="center"
+            fill={num2color(1)}
+            borderColor="#aaaaaa"
+            key={`func-${layerNo}-activation-${y}`}
+            onShowTooltip={(x, y, text) => null} // setTooltip({ x, y: y + cellSize / 2 + 2, text })}
+            onHideTooltip={() => null} //setTooltip(undefined)}
+          />,
+          <Text
+            x={this.cX(layerX + weights.length * 3 + 1)}
+            y={this.cY(y, this.neuronCounts[layerNo]) + this.cellSize / 2}
+            text={`${(0).toFixed(3)}`}
+            fontSize={this.fontSize}
+            height={this.cellSize}
+            align="middle"
+            color="black"
+            key={`func-${layerNo}-result-${y}`}
+          />,
+        ),
+      );
+
+      layerX += 0;
+    });
+    return elements;
+  }
+}
+
 /// 1次元配列の一番大きな値のインデックス値
 const argmax_1d = (vector: number[]) => vector.map((val, i) => [val, i]).reduce((r, a) => (a[0] > r[0] ? a : r))[1];
 
-type DLGraphProps = { weights: any; layersCount: number };
-export const DLGraph = ({ weights, layersCount }: DLGraphProps) => {
-  const fontSize = 12;
-  const cellSize = 16;
+// グラフのサイズとか
+const fontSize = 12;
+const cellSize = 16;
+
+const genArrows = (neuronCounts: number[]) => {};
+
+export const DLGraph_ = ({ weights, layersCount }: DLGraphProps) => {
   const [tooltip, setTooltip] = useState<any>(undefined);
   const [inputs, setInputs] = useState<number[]>(times(3, (_) => Math.random()) as number[]);
+  const cX = (x: number) => x * cellSize + cellSize;
+  const cY = (y: number, height: number) => (y + (max_layer_height - height) / 2) * 2 * cellSize + cellSize;
 
   const input_layer = weights['W1'].length;
   const output_layer = weights[`W${layersCount - 1}`][0].length;
@@ -25,9 +215,6 @@ export const DLGraph = ({ weights, layersCount }: DLGraphProps) => {
     const h = weights[`b${i + 1}`].length;
     max_layer_height = Math.max(max_layer_height, h);
   });
-
-  const cX = (x: number) => x * cellSize + cellSize;
-  const cY = (y: number, height: number) => (y + (max_layer_height - height) / 2) * 2 * cellSize + cellSize;
 
   let elements: ReactNode[] = [];
   let posX = 0;
