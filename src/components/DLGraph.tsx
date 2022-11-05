@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Range } from 'react-daisyui';
-import { Line, Rect, Text, Tooltip, PlusIcon, RightArrowIcon } from './svg';
+import { Line, Rect, Text, Tooltip, PlusIcon, RightArrowIcon, Slider } from './svg';
 import { num2color, num2gray } from '../utils/color';
 import { clone, times } from '../utils/array';
 import { COLOR_INDEX_LABEL } from '../dataset';
@@ -52,31 +52,22 @@ export const DLGraph = ({ weights, layersCount }: DLGraphProps) => {
   });
 
   // 入力レイヤー
-  const rangeColor = ['red', 'green', 'blue'];
+  const rangeColor = ['#880000', '#008800', '#000088'];
   inputs.forEach((val, i) => {
     elements.push(
-      <foreignObject
+      <Slider
         x={cX(posX)}
         y={cY(i, inputs.length) - rangeHeight / 2}
         width={cellSize * rangeWidth}
         height={rangeHeight}
-      >
-        <Range
-          value={val * 255}
-          min={0}
-          max={255}
-          style={{ width: cellSize * rangeWidth }}
-          onChange={(e) => {
-            const val = parseInt(e.target.value, 10) / 255;
-            let newInputs = [...inputs];
-            newInputs[i] = val;
-            setInputs(newInputs);
-          }}
-          size="xs"
-          className={`range-${rangeColor[i]}`}
-          key={`inputs-${i}`}
-        />
-      </foreignObject>,
+        color={rangeColor[i]}
+        value={val}
+        onChange={(val) => {
+          let newInputs = [...inputs];
+          newInputs[i] = val;
+          setInputs(newInputs);
+        }}
+      />,
     );
   });
   elements.push(

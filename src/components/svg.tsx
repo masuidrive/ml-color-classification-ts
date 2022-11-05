@@ -1,3 +1,5 @@
+import { useState, useRef } from 'react';
+
 type TooltipProps = {
   x: number;
   y: number;
@@ -170,3 +172,60 @@ export const RightArrowIcon = ({ x, y, size, stroke = 'currentColor' }: IconProp
     <polyline points="12 5 19 12 12 19" />
   </svg>
 );
+
+function screenToSvg(point: any, el: any, svg: any) {
+  const pt = svg.createSVGPoint();
+  pt.x = point.x;
+  pt.y = point.y;
+  return pt.matrixTransform(el.getScreenCTM().inverse());
+}
+
+// https://feathericons.com/
+type SliderProps = { x: number; y: number; width: number; height: number; color: string; value: number; onChange: any };
+export const Slider = ({ x, y, width, height, color, value, onChange }: SliderProps) => {
+  const [click, setClick] = useState(false);
+  const changeValue = (e: any) => {
+    const val = Math.max(
+      0.0,
+      Math.min(
+        1.0,
+        (screenToSvg({ x: e.clientX, y: e.clientY }, e.target, ref.current).x - height / 2) / (width - height),
+      ),
+    );
+    onChange(val);
+    return val;
+  };
+  const ref = useRef(null);
+  const path = `
+      M ${height / 2} 0
+      h ${(width - height) * value}
+      a ${height / 2} ${height / 2} 0 0 1 0 ${height}
+      h ${-(width - height) * value}
+      a ${height / 2} ${height / 2} 0 0 1 0 ${-height}
+      z`;
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      ref={ref}
+      onMouseMove={(e) => {
+        e.preventDefault();
+        if(e.buttons > 0) changeValue(e);
+      }}
+      onMouseUp={(e) => {
+        e.preventDefault();
+        changeValue(e);
+      }}
+    >
+      <line x1={height / 2} y1={height / 2} x2={width - height / 2} y2={height / 2} stroke="#aaaaaa" strokeWidth="2" />
+      <path fill={color} d={path} strokeWidth={0} />
+      <circle cx={(width - height) * value + height / 2} cy={height / 2} r={height / 3} fill="white" />
+    </svg>
+  );
+};
