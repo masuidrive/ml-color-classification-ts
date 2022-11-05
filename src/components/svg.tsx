@@ -184,16 +184,19 @@ function screenToSvg(point: any, el: any, svg: any) {
 type SliderProps = { x: number; y: number; width: number; height: number; color: string; value: number; onChange: any };
 export const Slider = ({ x, y, width, height, color, value, onChange }: SliderProps) => {
   const [click, setClick] = useState(false);
-  const changeValue = (e: any) => {
-    const val = Math.max(
+  const changeValue = (e: React.TouchEvent<SVGSVGElement> | React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+    const [x, y] =
+      'targetTouches' in e ? [e.targetTouches[0].clientX, e.targetTouches[0].clientY] : [e.clientX, e.clientY];
+    const newVal = Math.max(
       0.0,
       Math.min(
         1.0,
-        (screenToSvg({ x: e.clientX, y: e.clientY }, e.target, ref.current).x - height / 2) / (width - height),
+        (screenToSvg({ x: Math.floor(x), y: Math.floor(y) }, e.target, ref.current).x - height / 2) / (width - height),
       ),
     );
-    onChange(val);
-    return val;
+    if (newVal !== value) {
+      onChange(newVal);
+    }
   };
   const ref = useRef(null);
   const path = `
@@ -216,18 +219,20 @@ export const Slider = ({ x, y, width, height, color, value, onChange }: SliderPr
       ref={ref}
       onMouseMove={(e) => {
         e.preventDefault();
+        console.log('onMouseMove');
         if (e.buttons > 0) changeValue(e);
       }}
-      onMouseUp={(e) => {
+      onMouseDown={(e) => {
+        console.log('onMouseDown');
         e.preventDefault();
         changeValue(e);
       }}
       onTouchMove={(e) => {
-        e.preventDefault();
+        console.log('onTouchMove', e);
         changeValue(e);
       }}
-      onTouchEnd={(e) => {
-        e.preventDefault();
+      onTouchStart={(e) => {
+        console.log('onTouchStart', e);
         changeValue(e);
       }}
     >
