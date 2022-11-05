@@ -32,7 +32,33 @@ export const DLGraph = ({ weights, layersCount }: DLGraphProps) => {
   let elements: ReactNode[] = [];
   let posX = 0;
   const rangeWidth = 5;
-  const weightMargin = 6;
+  const weightMargin = 7;
+
+  // 縦線
+  let lx = rangeWidth + weightMargin / 2;
+  elements.push(
+    <Line
+      x1={cX(lx)}
+      y1={cY(0, max_layer_height) - cellSize}
+      x2={cX(lx)}
+      y2={cY(max_layer_height, max_layer_height) + cellSize}
+      color="#888888"
+    />,
+  );
+  lx -= 1;
+  times(layersCount, (layerNo) => {
+    const layer1Count = weights[`W${layerNo + 1}`].length;
+    lx += layer1Count * 2 + 5 + weightMargin;
+    elements.push(
+      <Line
+        x1={cX(lx)}
+        y1={cY(0, max_layer_height) - cellSize}
+        x2={cX(lx)}
+        y2={cY(max_layer_height, max_layer_height) + cellSize}
+        color="#888888"
+      />,
+    );
+  });
 
   // 入力レイヤー → hidden layer
   const hidden_height = weights[`W1`][0].length as number;
@@ -68,6 +94,16 @@ export const DLGraph = ({ weights, layersCount }: DLGraphProps) => {
           setInputs(newInputs);
         }}
       />,
+      <Text
+        key={`input-${i}`}
+        x={cX(posX + rangeWidth + 0.5)}
+        y={cY(i, inputs.length) + rangeHeight / 2 + 2}
+        text={`${inputs[i].toFixed(3)}`}
+        fontSize={fontSize}
+        height={cellSize}
+        align="middle"
+        color="black"
+      />,
     );
   });
   elements.push(
@@ -81,7 +117,7 @@ export const DLGraph = ({ weights, layersCount }: DLGraphProps) => {
       key={`color-sample`}
     />,
   );
-  posX += rangeWidth;
+  posX += rangeWidth - 1;
 
   // レイヤー
   let data = clone(inputs);
@@ -180,7 +216,6 @@ export const DLGraph = ({ weights, layersCount }: DLGraphProps) => {
         );
         data[y] = data[y] / base;
       });
-      posX += 4;
     } else {
       times(neuronCount, (y) => {
         const sum = calculated.map((val) => val[y]).reduce((a, b) => a + b);
@@ -203,22 +238,26 @@ export const DLGraph = ({ weights, layersCount }: DLGraphProps) => {
         );
       });
     }
+    times(neuronCount, (y) => {
+      elements.push(
+        <Text
+          key={`val-${y}`}
+          x={cX(posX + 1.5)}
+          y={cY(y, neuronCount) - (cellSize - fontSize) / 2}
+          text={`${data[y].toFixed(3)}`}
+          fontSize={fontSize}
+          height={cellSize}
+          align="bottom"
+          color="black"
+        />,
+      );
+    });
   });
 
-  posX -= 2;
+  posX += 2;
   const resultIndex = argmax_1d(data);
   const labels = COLOR_INDEX_LABEL.map((label, idx) => (
     <>
-      <Text
-        key={`l-${idx}`}
-        x={cX(posX)}
-        y={cY(idx, COLOR_INDEX_LABEL.length) - (cellSize - fontSize) / 2}
-        text={`${data[idx].toFixed(3)}`}
-        fontSize={fontSize}
-        height={cellSize}
-        align="bottom"
-        color="black"
-      />
       <Text
         key={`v-${idx}`}
         x={cX(posX + 3)}

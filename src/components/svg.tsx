@@ -220,22 +220,14 @@ export const Slider = ({ x, y, width, height, color, value, onChange }: SliderPr
       style={{ touchAction: 'none' }}
       onMouseMove={(e) => {
         e.preventDefault();
-        console.log('onMouseMove');
         if (e.buttons > 0) changeValue(e);
       }}
       onMouseDown={(e) => {
-        console.log('onMouseDown');
         e.preventDefault();
         changeValue(e);
       }}
-      onTouchMove={(e) => {
-        console.log('onTouchMove', e);
-        changeValue(e);
-      }}
-      onTouchStart={(e) => {
-        console.log('onTouchStart', e);
-        changeValue(e);
-      }}
+      onTouchStart={(e) => changeValue(e)}
+      onTouchMove={(e) => changeValue(e)}
     >
       <line x1={height / 2} y1={height / 2} x2={width - height / 2} y2={height / 2} stroke="#aaaaaa" strokeWidth="2" />
       <path fill={color} d={path} strokeWidth={0} />
