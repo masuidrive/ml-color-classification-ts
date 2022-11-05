@@ -217,6 +217,7 @@ export const Slider = ({ x, y, width, height, color, value, onChange }: SliderPr
       strokeLinecap="round"
       strokeLinejoin="round"
       ref={ref}
+      style={{ touchAction: 'none' }}
       onMouseMove={(e) => {
         e.preventDefault();
         console.log('onMouseMove');
