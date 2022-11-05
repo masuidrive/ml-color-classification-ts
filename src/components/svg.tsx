@@ -216,9 +216,17 @@ export const Slider = ({ x, y, width, height, color, value, onChange }: SliderPr
       ref={ref}
       onMouseMove={(e) => {
         e.preventDefault();
-        if(e.buttons > 0) changeValue(e);
+        if (e.buttons > 0) changeValue(e);
       }}
       onMouseUp={(e) => {
+        e.preventDefault();
+        changeValue(e);
+      }}
+      onTouchMove={(e) => {
+        e.preventDefault();
+        changeValue(e);
+      }}
+      onTouchEnd={(e) => {
         e.preventDefault();
         changeValue(e);
       }}
