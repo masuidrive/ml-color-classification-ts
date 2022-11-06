@@ -8,11 +8,13 @@ const layerFunc = ['relu', 'softmax'];
 const rangeHeight = 20;
 
 type DLGraphProps = { weights: any; layersCount: number };
-type DLGraphStates = { inputs: number[] };
+type DLGraphStates = { inputs: number[]; tooltip: any };
 export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
   // グラフのサイズとか
   fontSize = 12;
   cellSize = 16;
+  width = 1024;
+  height = -1;
 
   inputNeuronCount = 3; // 入力は3次元
   layerMargin = 4; // レイヤー間の隙間
@@ -25,7 +27,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
 
   constructor(props: DLGraphProps) {
     super(props);
-    this.state = { inputs: times(this.inputNeuronCount, (_) => Math.random()) };
+    this.state = { inputs: times(this.inputNeuronCount, (_) => Math.random()), tooltip: undefined };
     this.neuronCounts = times(props.layersCount, (i) => props.weights[`b${i + 1}`].length as number);
     this.maxNeuronCount = Math.max(...this.neuronCounts);
     this.layerWidths = [
@@ -35,6 +37,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
         (i) => (props.weights[`W${i + 1}`].length as number) * 3 + 1 + this.numberCellCount /* bias */,
       ),
     ];
+    this.height = this.maxNeuronCount * this.cellSize * 2 + 2;
   }
 
   cX(x: number) {
@@ -46,19 +49,32 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
   }
 
   render() {
-    const width = 1000;
-    const height = this.maxNeuronCount * this.cellSize * 2 + 2;
     return (
       <svg
         width="100%"
-        viewBox={`0,0,${width},${height}`}
+        viewBox={`0,0,${this.width},${this.height}`}
         style={{ objectFit: 'cover' }}
         xmlns="http://www.w3.org/2000/svg"
       >
         {this.renderArrows()}
         {this.renderInputs()}
         {this.renderFuncs()}
+        {this.renderTooltip()}
       </svg>
+    );
+  }
+
+  // 必要ならTooltipを表示する
+  renderTooltip() {
+    return this.state.tooltip === undefined ? undefined : (
+      <Tooltip
+        x={this.state.tooltip.x}
+        y={this.state.tooltip.y}
+        width={240}
+        arrow={this.state.tooltip.x < this.width / 2 ? 'left' : 'right'}
+        text={this.state.tooltip.text}
+        key="tooltip"
+      />
     );
   }
 
@@ -153,8 +169,15 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
               fill={num2color(calculated[x][y])}
               borderColor="#aaaaaa"
               key={`func-${layerNo}-${x}-${y}`}
-              onShowTooltip={(x, y, text) => null} // setTooltip({ x, y: y + cellSize / 2 + 2, text })}
-              onHideTooltip={() => null} //setTooltip(undefined)}
+              onShowTooltip={(x, y, text) => this.setState({ tooltip: { x, y: y + this.cellSize / 2 + 2, text } })}
+              onHideTooltip={() => this.setState({ tooltip: undefined })}
+              tooltip={[
+                `f(x) = x * W[${y},${x}] + b[${x}]`,
+                `x = ${(data[x] ?? -10).toFixed(16)}`,
+                `W[${y},${x}] = ${val.toFixed(16)}`,
+                `b[${x}] = ${bias.toFixed(16)}`,
+                `result = ${calculated[x][y].toFixed(16)}`,
+              ].join('\n')}
             />,
           );
           if (x > 0) {
@@ -171,6 +194,9 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
         }),
       );
 
+      data = times(weights[0].length, (neuronNo) =>
+        times(weights.length, (inputNo) => calculated[inputNo][neuronNo] as number).reduce((a, b) => a + b),
+      );
       times(this.neuronCounts[layerNo], (y) =>
         elements.push(
           <Rect
@@ -183,8 +209,13 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
             fill={num2color(1)}
             borderColor="#aaaaaa"
             key={`func-${layerNo}-activation-${y}`}
-            onShowTooltip={(x, y, text) => null} // setTooltip({ x, y: y + cellSize / 2 + 2, text })}
-            onHideTooltip={() => null} //setTooltip(undefined)}
+            onShowTooltip={(x, y, text) => this.setState({ tooltip: { x, y: y + this.cellSize / 2 + 2, text } })}
+            onHideTooltip={() => this.setState({ tooltip: undefined })}
+            tooltip={[
+              'f(x) = exp(x) / total',
+              `x = ${data[y].toFixed(16)}`,
+              `result = ${(data[y] / 1).toFixed(16)}`,
+            ].join('\n')}
           />,
           <Text
             x={this.cX(layerX + weights.length * 3 + 1)}
@@ -357,7 +388,7 @@ export const DLGraph_ = ({ weights, layersCount }: DLGraphProps) => {
             fill={num2color(calculated[x][y])}
             borderColor="#aaaaaa"
             key={`${posX}-${x}-${y}`}
-            onShowTooltip={(x, y, text) => setTooltip({ x, y: y + cellSize / 2 + 2, text })}
+            onShowTooltip={(x, y) => setTooltip({ x, y: y + cellSize / 2 + 2, text: 'hogehoge' })}
             onHideTooltip={() => setTooltip(undefined)}
             tooltip={[
               `f(x) = x * W[${y},${x}] + b[${x}]`,
@@ -365,7 +396,7 @@ export const DLGraph_ = ({ weights, layersCount }: DLGraphProps) => {
               `W[${y},${x}] = ${val.toFixed(16)}`,
               `b[${x}] = ${bias.toFixed(16)}`,
               `result = ${calculated[x][y].toFixed(16)}`,
-            ]}
+            ].join('\n')}
           />,
         );
         return [posX + x * 3, y];
@@ -410,7 +441,7 @@ export const DLGraph_ = ({ weights, layersCount }: DLGraphProps) => {
               'f(x) = exp(x) / total',
               `x = ${data[y].toFixed(16)}`,
               `result = ${(data[y] / base).toFixed(16)}`,
-            ]}
+            ].join('\n')}
           />,
         );
         data[y] = data[y] / base;
@@ -432,7 +463,7 @@ export const DLGraph_ = ({ weights, layersCount }: DLGraphProps) => {
             key={`${posX}-${y}`}
             onShowTooltip={(x, y, text) => setTooltip({ x, y: y + cellSize / 2 + 2, text })}
             onHideTooltip={() => setTooltip(undefined)}
-            tooltip={['f(x) = max(0, x)', `x = ${sum.toFixed(16)}`, `result = ${data[y].toFixed(16)}`]}
+            tooltip={['f(x) = max(0, x)', `x = ${sum.toFixed(16)}`, `result = ${data[y].toFixed(16)}`].join('\n')}
           />,
         );
       });

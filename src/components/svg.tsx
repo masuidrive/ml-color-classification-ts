@@ -65,11 +65,11 @@ type RectProps = {
   align?: 'center';
   fill: string;
   borderColor?: string;
-  tooltip?: string | string[];
+  tooltip?: string;
   radius?: number;
-  onShowTooltip?: (x: number, y: number, text: string | string[]) => void;
-  onHideTooltip?: (x: number, y: number, text: string | string[]) => void;
-  onToggleTooltip?: (x: number, y: number, text: string | string[]) => void;
+  onShowTooltip?: (x: number, y: number, text: string) => void;
+  onHideTooltip?: (x: number, y: number, text: string) => void;
+  onToggleTooltip?: (x: number, y: number, text: string) => void;
 };
 export const Rect = ({
   x,
