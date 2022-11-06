@@ -66,6 +66,7 @@ type RectProps = {
   fill: string;
   borderColor?: string;
   tooltip?: string | string[];
+  radius?: number;
   onShowTooltip?: (x: number, y: number, text: string | string[]) => void;
   onHideTooltip?: (x: number, y: number, text: string | string[]) => void;
   onToggleTooltip?: (x: number, y: number, text: string | string[]) => void;
@@ -78,6 +79,7 @@ export const Rect = ({
   fill,
   align,
   borderColor,
+  radius,
   tooltip,
   onShowTooltip,
   onHideTooltip,
@@ -88,6 +90,7 @@ export const Rect = ({
     y={align === undefined ? y : y - height / 2}
     width={width}
     height={height}
+    rx={radius}
     style={{ fill, stroke: borderColor, strokeWidth: 1 }}
     onMouseEnter={() => {
       if (onShowTooltip && tooltip) onShowTooltip(x, y, tooltip);

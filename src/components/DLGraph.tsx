@@ -157,6 +157,17 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
               onHideTooltip={() => null} //setTooltip(undefined)}
             />,
           );
+          if (x > 0) {
+            elements.push(<PlusIcon x={this.cX(layerX + x * 3 - 1.5)} y={this.cY(y, row.length)} size={cellSize} />);
+          } else {
+            elements.push(
+              <RightArrowIcon
+                x={this.cX(layerX + weights.length * 3 - 1.5)}
+                y={this.cY(y, row.length)}
+                size={cellSize}
+              />,
+            );
+          }
         }),
       );
 
@@ -167,6 +178,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
             y={this.cY(y, this.neuronCounts[layerNo])}
             width={this.cellSize}
             height={this.cellSize}
+            radius={this.cellSize / 4}
             align="center"
             fill={num2color(1)}
             borderColor="#aaaaaa"
