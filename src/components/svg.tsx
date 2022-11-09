@@ -122,8 +122,12 @@ export const Text = ({ x, y, height, fontSize, fontWeight, text, color, align = 
   ) : (
     <text
       x={x}
-      y={y - height / 2}
-      style={{ dominantBaseline: 'middle', fontWeight: fontWeight ?? 'normal', fill: color, fontSize }}
+      y={y + height * 0.75}
+      style={{
+        fontWeight: fontWeight ?? 'normal',
+        fill: color,
+        fontSize,
+      }}
     >
       {text}
     </text>

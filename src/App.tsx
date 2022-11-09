@@ -128,7 +128,10 @@ export default function App() {
         <div style={{ margin: '0 auto' }}>
           ここに機械学習の説明を入れます
           <div style={{ position: 'sticky', top: '0px', backgroundColor: 'white' }}>
-            <DLGraph weights={message?.data?.weights} layersCount={2} />
+            <DLGraph
+              weights={message?.data?.weights}
+              layers={['input', 'fullConnected:1', 'relu', 'fullConnected:2', 'softmax']}
+            />
           </div>
           <hr />
           W1
