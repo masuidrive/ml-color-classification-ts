@@ -182,8 +182,6 @@ export const DLGraph_ = ({ weights, layersCount }: DLGraphProps) => {
             fill={num2color(calculated[x][y])}
             borderColor="#aaaaaa"
             key={`${posX}-${x}-${y}`}
-            onShowTooltip={(x, y) => setTooltip({ x, y: y + cellSize / 2 + 2, text: 'hogehoge' })}
-            onHideTooltip={() => setTooltip(undefined)}
             tooltip={[
               `f(x) = x * W[${y},${x}] + b[${x}]`,
               `x = ${data[x].toFixed(16)}`,
@@ -229,8 +227,6 @@ export const DLGraph_ = ({ weights, layersCount }: DLGraphProps) => {
             fill={num2color(data[y] / base)}
             borderColor="#aaaaaa"
             key={`${posX}-${y}`}
-            onShowTooltip={(x, y, text) => setTooltip({ x, y: y + cellSize / 2 + 2, text })}
-            onHideTooltip={() => setTooltip(undefined)}
             tooltip={[
               'f(x) = exp(x) / total',
               `x = ${data[y].toFixed(16)}`,
@@ -255,8 +251,6 @@ export const DLGraph_ = ({ weights, layersCount }: DLGraphProps) => {
             fill={num2color(data[y])}
             borderColor="#aaaaaa"
             key={`${posX}-${y}`}
-            onShowTooltip={(x, y, text) => setTooltip({ x, y: y + cellSize / 2 + 2, text })}
-            onHideTooltip={() => setTooltip(undefined)}
             tooltip={['f(x) = max(0, x)', `x = ${sum.toFixed(16)}`, `result = ${data[y].toFixed(16)}`].join('\n')}
           />,
         );

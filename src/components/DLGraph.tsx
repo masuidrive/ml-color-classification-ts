@@ -8,7 +8,13 @@ const fontSize = 12;
 const cellSize = 16;
 
 // レイヤーの処理を行う
-type layerFunc = (inputs: number[], params: any, paramsIndex: number) => [number[], React.ReactNode[], number, number];
+type layerTooltipFunc = (x: number, y: number, text: string) => void;
+type layerFunc = (
+  inputs: number[],
+  params: any,
+  paramsIndex: number,
+  tooltipFunc?: layerTooltipFunc,
+) => [number[], React.ReactNode[], number, number];
 
 const inputLayer: layerFunc = (input, params, paramsIndex) => {
   const numberCellWidth = 2.5; // 数字を表示するセル数
@@ -45,13 +51,12 @@ const inputLayer: layerFunc = (input, params, paramsIndex) => {
   return [input, elements, (inputSliderWidth + 0.5 + numberCellWidth) * cellSize, input.length * 2 * cellSize];
 };
 
-const fullConnectedLayer: layerFunc = (input, params, paramsIndex) => {
+const fullConnectedLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) => {
   const numberCellWidth = 2.5; // 数字を表示するセル数
 
   let elements: ReactNode[] = [];
   const weights = params[`W${paramsIndex}`] as number[][];
   const biases = params[`b${paramsIndex}`] as number[];
-  let calculated = clone(weights); // 同じサイズの配列を作りたいだけ
   let data = Array(weights[0].length).fill(0);
 
   const iLen = weights.length;
@@ -71,38 +76,38 @@ const fullConnectedLayer: layerFunc = (input, params, paramsIndex) => {
       );
     });
   });
-  let x =
-    // ブロックを書く
-    weights.forEach((row, x) =>
-      row.forEach((val, y) => {
-        const bias = biases[x];
-        calculated[x][y] = input[x] * val + bias;
-        data[y] += calculated[x][y];
+  // ブロックを書く
+  weights.forEach((row, x) =>
+    row.forEach((val, y) => {
+      const bias = biases[x];
+      const result = input[x] * val + bias;
+      data[y] += result;
+      elements.push(
+        <Rect
+          x={(connectorWidth + x * 2) * cellSize + 0.5}
+          y={y * 2 * cellSize + 0.5}
+          width={cellSize - 1}
+          height={cellSize - 1}
+          fill={num2color(result)}
+          borderColor="#aaaaaa"
+          key={`fullConnected-${paramsIndex}-${x}-${y}`}
+          tooltip={[
+            `f(x) = x * W[${y},${x}] + b[${x}]`,
+            `x = ${(input[x] ?? -10).toFixed(16)}`,
+            `W[${y},${x}] = ${val.toFixed(16)}`,
+            `b[${x}] = ${bias.toFixed(16)}`,
+            `result = ${result.toFixed(16)}`,
+          ].join('\n')}
+          onTooltip={tooltipFunc}
+        />,
+      );
+      if (x > 0) {
         elements.push(
-          <Rect
-            x={(connectorWidth + x * 2) * cellSize + 0.5}
-            y={y * 2 * cellSize + 0.5}
-            width={cellSize - 1}
-            height={cellSize - 1}
-            fill={num2color(calculated[x][y])}
-            borderColor="#aaaaaa"
-            key={`fullConnected-${paramsIndex}-${x}-${y}`}
-            tooltip={[
-              `f(x) = x * W[${y},${x}] + b[${x}]`,
-              `x = ${(input[x] ?? -10).toFixed(16)}`,
-              `W[${y},${x}] = ${val.toFixed(16)}`,
-              `b[${x}] = ${bias.toFixed(16)}`,
-              `result = ${calculated[x][y].toFixed(16)}`,
-            ].join('\n')}
-          />,
+          <PlusIcon x={(x * 2 - 0.5 + connectorWidth) * cellSize} y={(y * 2 + 0.5) * cellSize} size={fontSize} />,
         );
-        if (x > 0) {
-          elements.push(
-            <PlusIcon x={(x * 2 - 0.5 + connectorWidth) * cellSize} y={(y * 2 + 0.5) * cellSize} size={fontSize} />,
-          );
-        }
-      }),
-    );
+      }
+    }),
+  );
   data.forEach((val, y) => {
     elements.push(
       <Text
@@ -129,7 +134,8 @@ const fullConnectedLayer: layerFunc = (input, params, paramsIndex) => {
 const activationLayer = (
   input: number[],
   func: (val: number) => number,
-  // tooltip: (val: number) => string,
+  tooltip: string,
+  tooltipFunc?: layerTooltipFunc,
 ): [number[], React.ReactNode[], number, number] => {
   const numberCellWidth = 2.5; // 数字を表示するセル数
   const connectorWidth = 2;
@@ -153,7 +159,9 @@ const activationLayer = (
         height={cellSize - 1}
         fill={num2color(val)}
         borderColor="#aaaaaa"
-        key={`relu-${y}`}
+        key={`activation-${y}`}
+        tooltip={[tooltip, `x = ${val.toFixed(16)}`, `result = ${result.toFixed(16)}`].join('\n')}
+        onTooltip={tooltipFunc}
       />,
       <Text
         x={(1.5 + connectorWidth) * cellSize}
@@ -172,11 +180,11 @@ const activationLayer = (
   return [data, elements, (1 + numberCellWidth + 0.5 + connectorWidth) * cellSize, input.length * 2 * cellSize];
 };
 
-const reluLayer: layerFunc = (input, params, paramsIndex) => {
-  return activationLayer(input, (val) => Math.max(0, val));
+const reluLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) => {
+  return activationLayer(input, (val) => Math.max(0, val), 'f(x) = max(0, x)', tooltipFunc);
 };
 
-const softmaxLayer: layerFunc = (input, params, paramsIndex) => {
+const softmaxLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) => {
   const total = input.reduce((a, b) => Math.exp(b) + a);
   const tooltip = (val: number) =>
     [
@@ -185,7 +193,7 @@ const softmaxLayer: layerFunc = (input, params, paramsIndex) => {
       `total = ${total}`,
       `result = ${(Math.exp(val) / total).toFixed(16)}`,
     ].join('\n');
-  return activationLayer(input, (val) => Math.exp(val) / total);
+  return activationLayer(input, (val) => Math.exp(val) / total, 'f(x) = exp(x) / total', tooltipFunc);
 };
 
 type DLGraphProps = { weights: any; layers: string[] };
@@ -205,10 +213,29 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
 
   neuronCounts = [] as number[]; // 各レイヤーのニューロン数
   maxNeuronCount = 0; // 一番大きいレイヤーのニューロン数
+  layerFuncs: { [name: string]: layerFunc };
+  _handleTooltip: (x: number, y: number, text: string) => void;
 
   constructor(props: DLGraphProps) {
     super(props);
+
+    this.layerFuncs = {
+      input: this.inputRGBLayer.bind(this),
+      fullConnected: fullConnectedLayer,
+      relu: reluLayer,
+      softmax: softmaxLayer,
+    };
+    this._handleTooltip = this.handleTooltip.bind(this);
     this.state = { input: times(this.inputNeuronCount, (_) => Math.random()), tooltip: undefined };
+  }
+
+  handleTooltip(x: number, y: number, text: string): void {
+    console.log(text);
+    if (text === '') {
+      this.setState({ tooltip: undefined });
+    } else {
+      this.setState({ tooltip: { x, y, text } });
+    }
   }
 
   inputRGBLayer: layerFunc = (input, params, paramsIndex) => {
@@ -256,20 +283,14 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
   render() {
     let data = clone(this.state.input);
 
-    const layerFuncs = {
-      input: this.inputRGBLayer.bind(this),
-      fullConnected: fullConnectedLayer,
-      relu: reluLayer,
-      softmax: softmaxLayer,
-    } as { [name: string]: layerFunc };
-
     let posX = 0;
     const layers = this.props.layers.map((layer) => {
       const [layerName, paramsIndex] = layer.split(/:/, 2);
-      const [output, el, layerWidth, layerHeight] = layerFuncs[layerName](
+      const [output, el, layerWidth, layerHeight] = this.layerFuncs[layerName](
         data,
         this.props.weights,
         parseInt(paramsIndex, 10),
+        this._handleTooltip,
       );
       data = output;
       posX += layerWidth;
@@ -291,7 +312,21 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
             </svg>
           );
         })}
+        {this.renderTooltip()}
       </svg>
+    );
+  }
+
+  renderTooltip() {
+    return this.state.tooltip === undefined ? undefined : (
+      <Tooltip
+        x={this.state.tooltip.x}
+        y={this.state.tooltip.y}
+        width={240}
+        arrow={this.state.tooltip.x < this.width / 2 ? 'left' : 'right'}
+        text={this.state.tooltip.text}
+        key="tooltip"
+      />
     );
   }
   /*
