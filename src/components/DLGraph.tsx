@@ -199,14 +199,25 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
   inputRGBLayer: layerFunc = (input, params, paramsIndex) => {
     const numberCellWidth = 2.5; // 数字を表示するセル数
     const inputSliderWidth = 5; // 入力のセル数
+    const sampleWidth = 5;
+    const sampleHeight = 2.5;
 
-    let elements: ReactNode[] = [];
+    let elements: ReactNode[] = [
+      <Rect
+        x={((inputSliderWidth - sampleWidth) / 2) * cellSize + 1}
+        y={0}
+        width={sampleWidth * cellSize - 2}
+        height={sampleHeight * cellSize}
+        fill={`rgb(${input.map((v) => v * 255).join(',')})`}
+        borderColor="#e0e0e0"
+      />,
+    ];
     const rangeColor = ['#880000', '#008800', '#000088'];
     this.state.input.forEach((val, i) => {
       elements.push(
         <Slider
           x={0}
-          y={i * 2 * cellSize}
+          y={(sampleHeight + 1 + i * 2) * cellSize}
           width={inputSliderWidth * cellSize}
           height={cellSize}
           color={rangeColor[i]}
@@ -220,7 +231,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
         />,
         <Text
           x={(inputSliderWidth + 0.5) * cellSize}
-          y={i * cellSize * 2}
+          y={(sampleHeight + 1 + i * 2) * cellSize}
           text={this.state.input[i].toFixed(3)}
           fontSize={fontSize}
           height={cellSize}
@@ -234,7 +245,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
       this.state.input,
       elements,
       (inputSliderWidth + 0.5 + numberCellWidth) * cellSize,
-      this.state.input.length * 2 * cellSize,
+      (this.state.input.length * 2 + (sampleHeight + 1) * 2) * cellSize,
     ];
   };
 
