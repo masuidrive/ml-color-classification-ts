@@ -1,12 +1,8 @@
-import { FC } from 'react';
-import React, { ReactNode, useState } from 'react';
+import { FC, ReactNode, useState } from 'react';
 import { Line, Rect, Text, PlusIcon, RightArrowIcon, Slider } from '../components/svg';
 import { num2color, num2gray } from '../utils/color';
 import { clone, times } from '../utils/array';
 import { COLOR_INDEX_LABEL } from '../dataset';
-const cellPosX = (x: number, size: number) => x * size;
-const cellPosY = (y: number, size: number, height: number, maxHeight: number) =>
-  (y + (maxHeight - height) / 2) * 2 * size;
 
 type CellProps = {
   x: number;

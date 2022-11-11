@@ -1,8 +1,9 @@
 import React, { FC, ReactNode, useState } from 'react';
-import { Line, Rect, Text, PlusIcon, RightArrowIcon, Slider } from './svg';
+import { Line, Rect, Text, PlusIcon, Slider } from './svg';
 import { num2color, num2gray } from '../utils/color';
 import { clone, times } from '../utils/array';
 import { COLOR_INDEX_LABEL } from '../dataset';
+import { Card } from 'react-daisyui';
 
 const fontSize = 12;
 const cellSize = 16;
@@ -274,13 +275,15 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
         {this.state.tooltip ? (
           <div
             style={{
-              border: '1px solid red',
               left: this.state.tooltip.x,
               top: this.state.tooltip.y + 24,
               position: 'fixed',
             }}
+            className="p-2 rounded-md shadow-md bg-slate-200 text-xs"
           >
-            {this.state.tooltip.text}
+            {this.state.tooltip.text.split(/\n/).map((str: string) => (
+              <p>{str}</p>
+            ))}
           </div>
         ) : undefined}
       </>
