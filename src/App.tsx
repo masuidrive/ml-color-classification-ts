@@ -131,6 +131,7 @@ export default function App() {
             <DLGraph
               weights={message?.data?.weights}
               layers={['input', 'fullConnected:1', 'relu', 'fullConnected:2', 'softmax']}
+              forcusLayerIndex={[0, 3]}
             />
           </div>
           <hr />

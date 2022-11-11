@@ -2,12 +2,10 @@ import React, { FC, ReactNode, useState } from 'react';
 import { Line, Rect, Text, PlusIcon, Slider } from './svg';
 import { num2color, num2gray } from '../utils/color';
 import { clone, times } from '../utils/array';
-import { COLOR_INDEX_LABEL } from '../dataset';
-import { Card } from 'react-daisyui';
 
 const fontSize = 12;
 const cellSize = 16;
-const layerMargin = 4;
+const layerMargin = 6;
 
 // レイヤーの処理を行う
 type layerTooltipFunc = (x: number, y: number, text: string) => void;
@@ -19,7 +17,7 @@ type layerFunc = (
 ) => [number[], React.ReactNode[], number, number, string];
 
 const fullConnectedLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) => {
-  const numberCellWidth = 3; // 数字を表示するセル数
+  const numberCellWidth = 2.75; // 数字を表示するセル数
   let elements: ReactNode[] = [];
   const weights = params[`W${paramsIndex}`] as number[][];
   const biases = params[`b${paramsIndex}`] as number[];
@@ -106,7 +104,7 @@ const activationLayer = (
   tooltip: string,
   tooltipFunc?: layerTooltipFunc,
 ): [number[], React.ReactNode[], number, number, string] => {
-  const numberCellWidth = 3; // 数字を表示するセル数
+  const numberCellWidth = 2.75; // 数字を表示するセル数
   const connectorWidth = 2;
   let elements: ReactNode[] = [];
 
@@ -158,7 +156,7 @@ const softmaxLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) => {
   return activationLayer('Softmax', input, (val) => Math.exp(val) / total, 'f(x) = exp(x) / total', tooltipFunc);
 };
 
-type DLGraphProps = { weights: any; layers: string[] };
+type DLGraphProps = { weights: any; layers: string[]; forcusLayerIndex?: number[] };
 type DLGraphStates = { input: number[]; tooltip: any };
 export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
   // グラフのサイズとか
@@ -257,7 +255,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
     let data = clone(this.state.input);
 
     let posX = 0;
-    const layers = this.props.layers.map((layer) => {
+    const layers = this.props.layers.map((layer, i) => {
       const [layerName, paramsIndex] = layer.split(/:/, 2);
       const [output, el, layerWidth, layerHeight, label] = this.layerFuncs[layerName](
         data,
@@ -267,7 +265,8 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
       );
       data = output;
       posX += layerWidth;
-      return { x: posX - layerWidth, width: layerWidth, height: layerHeight, el, label };
+      const opacity = this.props.forcusLayerIndex === undefined || this.props.forcusLayerIndex.includes(i) ? 1.0 : 0.2;
+      return { x: posX - layerWidth, width: layerWidth, height: layerHeight, el, label, opacity };
     });
 
     let maxH = Math.max(...layers.map((l) => l.height));
@@ -282,7 +281,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
           {layers.map((layer, i) => {
             return (
               <>
-                <svg x={layer.x} y={(maxH - layer.height) / 2} key={`layer-${i}`}>
+                <svg x={layer.x} y={(maxH - layer.height) / 2} style={{ opacity: layer.opacity }} key={`layer-${i}`}>
                   {layer.el}
                 </svg>
                 <Text
@@ -295,6 +294,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
                   color="black"
                   text={layer.label}
                   key={`layer-label-${i}`}
+                  style={{ opacity: layer.opacity }}
                 />
                 {i > 0 ? <Line x1={layer.x} y1={0} x2={layer.x} y2={maxH} color="#e0e0e0" /> : undefined}
               </>

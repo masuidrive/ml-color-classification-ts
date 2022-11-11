@@ -1,3 +1,4 @@
+import { style } from '@mui/system';
 import { useState, useRef } from 'react';
 
 type LineProps = { x1: number; y1: number; x2: number; y2: number; color: string; style?: any };
@@ -44,6 +45,7 @@ type TextProps = {
   fontWeight?: 'bold' | 'normal';
   text: string;
   color: string;
+  style?: React.CSSProperties;
   valign?: 'middle' | 'top';
   align?: 'left' | 'center';
 };
@@ -55,6 +57,7 @@ export const Text = ({
   fontWeight,
   text,
   color,
+  style,
   align = 'left',
   valign = 'middle',
 }: TextProps) =>
@@ -63,6 +66,7 @@ export const Text = ({
       x={x}
       y={y}
       style={{
+        ...style,
         dominantBaseline: 'text-before-edge',
         textAnchor: align == 'center' ? 'middle' : 'start',
         fontWeight: fontWeight ?? 'normal',
@@ -77,6 +81,8 @@ export const Text = ({
       x={x}
       y={y + height * 0.75}
       style={{
+        ...style,
+        textAnchor: align == 'center' ? 'middle' : 'start',
         fontWeight: fontWeight ?? 'normal',
         fill: color,
         fontSize,
