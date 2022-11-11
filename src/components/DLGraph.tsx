@@ -7,6 +7,7 @@ import { Card } from 'react-daisyui';
 
 const fontSize = 12;
 const cellSize = 16;
+const layerMargin = 4;
 
 // レイヤーの処理を行う
 type layerTooltipFunc = (x: number, y: number, text: string) => void;
@@ -15,10 +16,10 @@ type layerFunc = (
   params: any,
   paramsIndex: number,
   tooltipFunc?: layerTooltipFunc,
-) => [number[], React.ReactNode[], number, number];
+) => [number[], React.ReactNode[], number, number, string];
 
 const fullConnectedLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) => {
-  const numberCellWidth = 2.5; // 数字を表示するセル数
+  const numberCellWidth = 3; // 数字を表示するセル数
   let elements: ReactNode[] = [];
   const weights = params[`W${paramsIndex}`] as number[][];
   const biases = params[`b${paramsIndex}`] as number[];
@@ -32,7 +33,7 @@ const fullConnectedLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) 
     times(oLen, (y) => {
       elements.push(
         <Line
-          x1={0}
+          x1={layerMargin}
           y1={(x * 2 + (h - iLen) + 0.5) * cellSize}
           x2={(connectorWidth + x * 2) * cellSize}
           y2={(y * 2 + (h - oLen) + 0.5) * cellSize}
@@ -82,7 +83,7 @@ const fullConnectedLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) 
         text={val.toFixed(3)}
         fontSize={fontSize}
         height={cellSize}
-        align="middle"
+        valign="middle"
         color="black"
         key={`input-relu-text-${y}`}
       />,
@@ -94,16 +95,18 @@ const fullConnectedLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) 
     elements,
     (connectorWidth + weights.length * 2 - 1 + numberCellWidth + 0.5) * cellSize,
     data.length * 2 * cellSize,
+    `Full connected ${paramsIndex}`,
   ];
 };
 
 const activationLayer = (
+  label: string,
   input: number[],
   func: (val: number) => number,
   tooltip: string,
   tooltipFunc?: layerTooltipFunc,
-): [number[], React.ReactNode[], number, number] => {
-  const numberCellWidth = 2.5; // 数字を表示するセル数
+): [number[], React.ReactNode[], number, number, string] => {
+  const numberCellWidth = 3; // 数字を表示するセル数
   const connectorWidth = 2;
   let elements: ReactNode[] = [];
 
@@ -112,7 +115,7 @@ const activationLayer = (
     const result = func(val);
     elements.push(
       <Line
-        x1={0}
+        x1={layerMargin}
         y1={(y * 2 + 0.5) * cellSize}
         x2={connectorWidth * cellSize - 2}
         y2={(y * 2 + 0.5) * cellSize}
@@ -135,7 +138,7 @@ const activationLayer = (
         text={result.toFixed(3)}
         fontSize={fontSize}
         height={cellSize}
-        align="middle"
+        valign="middle"
         color="black"
         key={`input-relu-text-${y}`}
       />,
@@ -143,16 +146,16 @@ const activationLayer = (
     return result;
   });
 
-  return [data, elements, (1 + numberCellWidth + 0.5 + connectorWidth) * cellSize, input.length * 2 * cellSize];
+  return [data, elements, (1 + numberCellWidth + 0.5 + connectorWidth) * cellSize, input.length * 2 * cellSize, label];
 };
 
 const reluLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) => {
-  return activationLayer(input, (val) => Math.max(0, val), 'f(x) = max(0, x)', tooltipFunc);
+  return activationLayer('ReLU', input, (val) => Math.max(0, val), 'f(x) = max(0, x)', tooltipFunc);
 };
 
 const softmaxLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) => {
   const total = input.reduce((a, b) => Math.exp(b) + a);
-  return activationLayer(input, (val) => Math.exp(val) / total, 'f(x) = exp(x) / total', tooltipFunc);
+  return activationLayer('Softmax', input, (val) => Math.exp(val) / total, 'f(x) = exp(x) / total', tooltipFunc);
 };
 
 type DLGraphProps = { weights: any; layers: string[] };
@@ -204,7 +207,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
 
     let elements: ReactNode[] = [
       <Rect
-        x={((inputSliderWidth - sampleWidth) / 2) * cellSize + 1}
+        x={((inputSliderWidth - sampleWidth) / 2) * cellSize + 3}
         y={0}
         width={sampleWidth * cellSize - 2}
         height={sampleHeight * cellSize}
@@ -216,7 +219,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
     this.state.input.forEach((val, i) => {
       elements.push(
         <Slider
-          x={0}
+          x={2}
           y={(sampleHeight + 1 + i * 2) * cellSize}
           width={inputSliderWidth * cellSize}
           height={cellSize}
@@ -235,7 +238,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
           text={this.state.input[i].toFixed(3)}
           fontSize={fontSize}
           height={cellSize}
-          align="middle"
+          valign="middle"
           color="black"
           key={`input-layer-text-${i}`}
         />,
@@ -246,6 +249,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
       elements,
       (inputSliderWidth + 0.5 + numberCellWidth) * cellSize,
       (this.state.input.length * 2 + (sampleHeight + 1) * 2) * cellSize,
+      'Input',
     ];
   };
 
@@ -255,7 +259,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
     let posX = 0;
     const layers = this.props.layers.map((layer) => {
       const [layerName, paramsIndex] = layer.split(/:/, 2);
-      const [output, el, layerWidth, layerHeight] = this.layerFuncs[layerName](
+      const [output, el, layerWidth, layerHeight, label] = this.layerFuncs[layerName](
         data,
         this.props.weights,
         parseInt(paramsIndex, 10),
@@ -263,7 +267,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
       );
       data = output;
       posX += layerWidth;
-      return { x: posX - layerWidth, width: layerWidth, height: layerHeight, el };
+      return { x: posX - layerWidth, width: layerWidth, height: layerHeight, el, label };
     });
 
     let maxH = Math.max(...layers.map((l) => l.height));
@@ -271,15 +275,29 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
       <>
         <svg
           width="100%"
-          viewBox={`0,0,${this.width},${maxH}`}
+          viewBox={`0,0,${this.width},${maxH + fontSize}`}
           style={{ objectFit: 'cover' }}
           xmlns="http://www.w3.org/2000/svg"
         >
-          {layers.map((layer) => {
+          {layers.map((layer, i) => {
             return (
-              <svg x={layer.x} y={(maxH - layer.height) / 2}>
-                {layer.el}
-              </svg>
+              <>
+                <svg x={layer.x} y={(maxH - layer.height) / 2} key={`layer-${i}`}>
+                  {layer.el}
+                </svg>
+                <Text
+                  x={layer.x + layer.width / 2}
+                  y={maxH - fontSize / 2}
+                  height={fontSize}
+                  fontSize={fontSize}
+                  align="center"
+                  valign="top"
+                  color="black"
+                  text={layer.label}
+                  key={`layer-label-${i}`}
+                />
+                {i > 0 ? <Line x1={layer.x} y1={0} x2={layer.x} y2={maxH} color="#e0e0e0" /> : undefined}
+              </>
             );
           })}
         </svg>

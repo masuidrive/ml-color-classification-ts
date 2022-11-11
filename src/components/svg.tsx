@@ -44,11 +44,32 @@ type TextProps = {
   fontWeight?: 'bold' | 'normal';
   text: string;
   color: string;
-  align: 'middle' | 'bottom';
+  valign?: 'middle' | 'top';
+  align?: 'left' | 'center';
 };
-export const Text = ({ x, y, height, fontSize, fontWeight, text, color, align = 'middle' }: TextProps) =>
-  align === 'bottom' ? (
-    <text x={x} y={y} style={{ fontWeight: fontWeight ?? 'normal', fill: color, fontSize }}>
+export const Text = ({
+  x,
+  y,
+  height,
+  fontSize,
+  fontWeight,
+  text,
+  color,
+  align = 'left',
+  valign = 'middle',
+}: TextProps) =>
+  valign === 'top' ? (
+    <text
+      x={x}
+      y={y}
+      style={{
+        dominantBaseline: 'text-before-edge',
+        textAnchor: align == 'center' ? 'middle' : 'start',
+        fontWeight: fontWeight ?? 'normal',
+        fill: color,
+        fontSize,
+      }}
+    >
       {text}
     </text>
   ) : (
