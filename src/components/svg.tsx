@@ -1,57 +1,5 @@
 import { useState, useRef } from 'react';
 
-type TooltipProps = {
-  x: number;
-  y: number;
-  width: number;
-  lineHeight?: number;
-  arrow?: string;
-  offset?: string;
-  text: string | string[];
-};
-export const Tooltip = ({ x, y, width, lineHeight, arrow, text }: TooltipProps) => {
-  if (typeof text == 'string') {
-    text = text.split(/\n/);
-  }
-  lineHeight ??= 20;
-  arrow ??= 'left';
-  const lineCount = text.length;
-  const arrowSize = 8;
-  const radius = 5;
-  const height = lineHeight! * lineCount;
-  const path = `M ${x},${y}
-      l 0,0 ${arrowSize / 2},${arrowSize}
-      h ${arrow === 'left' ? width - arrowSize * 1.5 : arrowSize * 1.5}
-      a ${radius},${radius} 0 0 1 ${radius},${radius}
-      v ${height}
-      a ${radius},${radius} 0 0 1 ${-radius},${radius}
-      h ${-width}
-      a ${radius},${radius} 0 0 1 ${-radius},${-radius}
-      v ${-height}
-      a ${radius},${radius} 0 0 1 ${radius},${-radius}
-      h ${arrow === 'left' ? arrowSize * 0.5 : width - arrowSize * 2.5}
-      z`;
-  return (
-    <g>
-      <path fill="#eeeeee" stroke="#888888" d={path} strokeWidth={2} />
-      {text.map((line, lineNo) => (
-        <text
-          x={arrow === 'left' ? x : x - width + arrowSize * 2 + radius}
-          y={y + arrowSize + radius + lineHeight! / 2 + lineNo * lineHeight!}
-          stroke="black"
-          dominantBaseline="central"
-          fontFamily="monospace"
-          fontSize={12}
-          fontWeight="normal"
-          key={`text-${lineNo}`}
-        >
-          {line}
-        </text>
-      ))}
-    </g>
-  );
-};
-
 type LineProps = { x1: number; y1: number; x2: number; y2: number; color: string; style?: any };
 export const Line = ({ x1, y1, x2, y2, color, style }: LineProps) => (
   <line x1={x1} y1={y1} x2={x2} y2={y2} style={{ stroke: color, strokeWidth: 1, ...style }} markerEnd="url(#arrow)" />
@@ -77,8 +25,10 @@ export const Rect = ({ x, y, width, height, fill, align, borderColor, radius, to
     height={height}
     rx={radius}
     style={{ fill, stroke: borderColor, strokeWidth: 1 }}
-    onMouseEnter={() => {
-      if (onTooltip && tooltip) onTooltip(x, y, tooltip);
+    onMouseEnter={(e) => {
+      const pos = e.currentTarget.getBoundingClientRect();
+      console.log(pos, window.pageXOffset, window.pageYOffset, window.scrollX, window.scrollY);
+      if (onTooltip && tooltip) onTooltip(pos.x, pos.y, tooltip);
     }}
     onMouseLeave={() => {
       if (onTooltip && tooltip) onTooltip(0, 0, '');

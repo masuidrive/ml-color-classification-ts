@@ -1,6 +1,6 @@
 import { FC } from 'react';
 import React, { ReactNode, useState } from 'react';
-import { Line, Rect, Text, Tooltip, PlusIcon, RightArrowIcon, Slider } from '../components/svg';
+import { Line, Rect, Text, PlusIcon, RightArrowIcon, Slider } from '../components/svg';
 import { num2color, num2gray } from '../utils/color';
 import { clone, times } from '../utils/array';
 import { COLOR_INDEX_LABEL } from '../dataset';
@@ -314,16 +314,7 @@ export const DLGraph_ = ({ weights, layersCount }: DLGraphProps) => {
       </marker>
       {elements}
       {labels}
-      {tooltip === undefined ? undefined : (
-        <Tooltip
-          x={tooltip.x}
-          y={tooltip.y}
-          width={240}
-          arrow={tooltip.x < width / 2 ? 'left' : 'right'}
-          text={tooltip.text}
-          key="tooltip"
-        />
-      )}
+      {tooltip === undefined ? undefined : undefined}
     </svg>
   );
 };

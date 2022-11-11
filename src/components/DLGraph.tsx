@@ -1,5 +1,5 @@
-import React, { ReactNode, useState } from 'react';
-import { Line, Rect, Text, Tooltip, PlusIcon, RightArrowIcon, Slider } from './svg';
+import React, { FC, ReactNode, useState } from 'react';
+import { Line, Rect, Text, PlusIcon, RightArrowIcon, Slider } from './svg';
 import { num2color, num2gray } from '../utils/color';
 import { clone, times } from '../utils/array';
 import { COLOR_INDEX_LABEL } from '../dataset';
@@ -16,44 +16,8 @@ type layerFunc = (
   tooltipFunc?: layerTooltipFunc,
 ) => [number[], React.ReactNode[], number, number];
 
-const inputLayer: layerFunc = (input, params, paramsIndex) => {
-  const numberCellWidth = 2.5; // 数字を表示するセル数
-  const inputSliderWidth = 5; // 入力のセル数
-
-  let elements: ReactNode[] = [];
-  const rangeColor = ['#880000', '#008800', '#000088'];
-  input.forEach((val, i) => {
-    elements.push(
-      <Slider
-        x={0}
-        y={i * 2 * cellSize}
-        width={inputSliderWidth * cellSize}
-        height={cellSize}
-        color={rangeColor[i]}
-        value={val}
-        onChange={(val: any) => {
-          input[i] = val;
-        }}
-        key={`input-layer-slider-${i}`}
-      />,
-      <Text
-        x={(inputSliderWidth + 0.5) * cellSize}
-        y={i * cellSize * 2}
-        text={input[i].toFixed(3)}
-        fontSize={fontSize}
-        height={cellSize}
-        align="middle"
-        color="black"
-        key={`input-layer-text-${i}`}
-      />,
-    );
-  });
-  return [input, elements, (inputSliderWidth + 0.5 + numberCellWidth) * cellSize, input.length * 2 * cellSize];
-};
-
 const fullConnectedLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) => {
   const numberCellWidth = 2.5; // 数字を表示するセル数
-
   let elements: ReactNode[] = [];
   const weights = params[`W${paramsIndex}`] as number[][];
   const biases = params[`b${paramsIndex}`] as number[];
@@ -76,6 +40,7 @@ const fullConnectedLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) 
       );
     });
   });
+
   // ブロックを書く
   weights.forEach((row, x) =>
     row.forEach((val, y) => {
@@ -186,13 +151,6 @@ const reluLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) => {
 
 const softmaxLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) => {
   const total = input.reduce((a, b) => Math.exp(b) + a);
-  const tooltip = (val: number) =>
-    [
-      'f(x) = exp(x) / total',
-      `x = ${val.toFixed(16)}`,
-      `total = ${total}`,
-      `result = ${(Math.exp(val) / total).toFixed(16)}`,
-    ].join('\n');
   return activationLayer(input, (val) => Math.exp(val) / total, 'f(x) = exp(x) / total', tooltipFunc);
 };
 
@@ -230,7 +188,6 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
   }
 
   handleTooltip(x: number, y: number, text: string): void {
-    console.log(text);
     if (text === '') {
       this.setState({ tooltip: undefined });
     } else {
@@ -299,246 +256,34 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
 
     let maxH = Math.max(...layers.map((l) => l.height));
     return (
-      <svg
-        width="100%"
-        viewBox={`0,0,${this.width},${maxH}`}
-        style={{ objectFit: 'cover' }}
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {layers.map((layer) => {
-          return (
-            <svg x={layer.x} y={(maxH - layer.height) / 2}>
-              {layer.el}
-            </svg>
-          );
-        })}
-        {this.renderTooltip()}
-      </svg>
-    );
-  }
-
-  renderTooltip() {
-    return this.state.tooltip === undefined ? undefined : (
-      <Tooltip
-        x={this.state.tooltip.x}
-        y={this.state.tooltip.y}
-        width={240}
-        arrow={this.state.tooltip.x < this.width / 2 ? 'left' : 'right'}
-        text={this.state.tooltip.text}
-        key="tooltip"
-      />
-    );
-  }
-  /*
-  renderFullConnectedLayer(input: number[], weight: number[][], bias: number[]) {}
-  renderReluLayer(input: number) {}
-  renderSoftmaxLayer(input: number) {}
-
-  renderInputLayer() {
-    let elements: ReactNode[] = [];
-    const rangeColor = ['#880000', '#008800', '#000088'];
-    this.state.inputs.forEach((val, i) => {
-      elements.push(
-        <Slider
-          x={this.cX(0)}
-          y={this.cY(i, this.inputNeuronCount) - this.cellSize / 2}
-          width={this.cellSize * this.inputSliderWidth}
-          height={this.cellSize}
-          color={rangeColor[i]}
-          value={val}
-          onChange={(val: any) => {
-            let newInputs = [...this.state.inputs];
-            newInputs[i] = val;
-            this.setState({ inputs: newInputs });
-          }}
-          key={`input-layer-slider-${i}`}
-        />,
-        <Text
-          x={this.cX(this.inputSliderWidth + 0.5)}
-          y={this.cY(i, this.inputNeuronCount) + this.cellSize / 2}
-          text={`${this.state.inputs[i].toFixed(3)}`}
-          fontSize={this.fontSize}
-          height={this.cellSize}
-          align="middle"
-          color="black"
-          key={`input-layer-text-${i}`}
-        />,
-      );
-    });
-    return [elements, this.inputSliderWidth + 0.5 + this.numberCellWidth, this.state.inputs];
-  }
-
-  // 必要ならTooltipを表示する
-  renderTooltip() {
-    return this.state.tooltip === undefined ? undefined : (
-      <Tooltip
-        x={this.state.tooltip.x}
-        y={this.state.tooltip.y}
-        width={240}
-        arrow={this.state.tooltip.x < this.width / 2 ? 'left' : 'right'}
-        text={this.state.tooltip.text}
-        key="tooltip"
-      />
-    );
-  }
-
-  // 入力の線を一番下に引く
-  renderArrows() {
-    let elements: ReactNode[] = [];
-
-    const heights = [this.inputNeuronCount, ...this.neuronCounts];
-    let layerX = 0;
-    times(this.props.layersCount, (layerNo) => {
-      layerX += this.layerWidths[layerNo];
-      times(heights[layerNo], (i) => {
-        // inputレイヤーだけRGBで線を引く
-        const lineColor = layerNo === 0 ? times(this.inputNeuronCount, (j) => (i == j ? 192 : 0)) : [192, 192, 192];
-        times(heights[layerNo + 1], (y) => {
-          elements.push(
-            <Line
-              x1={this.cX(layerX - 0.5)}
-              y1={this.cY(i, heights[layerNo])}
-              x2={this.cX(layerX + this.layerMargin + i * 3) - this.cellSize * 0.5 - 2}
-              y2={this.cY(y, heights[layerNo + 1])}
-              color={`rgb(${lineColor.join(',')})`}
-              key={`input-arrow-${layerNo}-${i}-${y}`}
-            />,
-          );
-        });
-      });
-      layerX += this.layerMargin;
-    });
-
-    return elements;
-  }
-
-  // 入力の箱
-  renderInputs() {
-    let elements: ReactNode[] = [];
-    const rangeColor = ['#880000', '#008800', '#000088'];
-    this.state.inputs.forEach((val, i) => {
-      elements.push(
-        <Slider
-          x={this.cX(0)}
-          y={this.cY(i, this.inputNeuronCount) - this.cellSize / 2}
-          width={this.cellSize * this.inputSliderWidth}
-          height={this.cellSize}
-          color={rangeColor[i]}
-          value={val}
-          onChange={(val: any) => {
-            let newInputs = [...this.state.inputs];
-            newInputs[i] = val;
-            this.setState({ inputs: newInputs });
-          }}
-          key={`input-slider-${i}`}
-        />,
-        <Text
-          x={this.cX(this.inputSliderWidth + 0.5)}
-          y={this.cY(i, this.inputNeuronCount) + this.cellSize / 2}
-          text={`${this.state.inputs[i].toFixed(3)}`}
-          fontSize={this.fontSize}
-          height={this.cellSize}
-          align="middle"
-          color="black"
-          key={`input-text-${i}`}
-        />,
-      );
-    });
-    return elements;
-  }
-
-  // 計算の箱
-  renderFuncs() {
-    let elements: ReactNode[] = [];
-    let layerX = 0;
-    let data = this.state.inputs;
-    times(this.props.layers.length, (layerNo) => {
-      layerX += this.layerWidths[layerNo] + this.layerMargin;
-
-      const weights = this.props.weights[`W${layerNo + 1}`] as number[][];
-      let calculated = clone(weights); // 同じサイズの配列を作りたいだけ
-
-      // ブロックを書く
-      weights.forEach((row, x) =>
-        row.forEach((val, y) => {
-          const bias = this.props.weights[`b${layerNo + 1}`][x] as number;
-          calculated[x][y] = data[x] * val + bias;
-          elements.push(
-            <Rect
-              x={this.cX(layerX + x * 3)}
-              y={this.cY(y, row.length)}
-              width={this.cellSize}
-              height={this.cellSize}
-              align="center"
-              fill={num2color(calculated[x][y])}
-              borderColor="#aaaaaa"
-              key={`func-${layerNo}-${x}-${y}`}
-              onShowTooltip={(x, y, text) => this.setState({ tooltip: { x, y: y + this.cellSize / 2 + 2, text } })}
-              onHideTooltip={() => this.setState({ tooltip: undefined })}
-              tooltip={[
-                `f(x) = x * W[${y},${x}] + b[${x}]`,
-                `x = ${(data[x] ?? -10).toFixed(16)}`,
-                `W[${y},${x}] = ${val.toFixed(16)}`,
-                `b[${x}] = ${bias.toFixed(16)}`,
-                `result = ${calculated[x][y].toFixed(16)}`,
-              ].join('\n')}
-            />,
-          );
-          if (x > 0) {
-            elements.push(
-              <PlusIcon x={this.cX(layerX + x * 3 - 1.5)} y={this.cY(y, row.length)} size={this.cellSize} />,
+      <>
+        <svg
+          width="100%"
+          viewBox={`0,0,${this.width},${maxH}`}
+          style={{ objectFit: 'cover' }}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {layers.map((layer) => {
+            return (
+              <svg x={layer.x} y={(maxH - layer.height) / 2}>
+                {layer.el}
+              </svg>
             );
-          } else {
-            elements.push(
-              <RightArrowIcon
-                x={this.cX(layerX + weights.length * 3 - 1.5)}
-                y={this.cY(y, row.length)}
-                size={this.cellSize}
-              />,
-            );
-          }
-        }),
-      );
-
-      data = times(weights[0].length, (neuronNo) =>
-        times(weights.length, (inputNo) => calculated[inputNo][neuronNo] as number).reduce((a, b) => a + b),
-      );
-      times(this.neuronCounts[layerNo], (y) =>
-        elements.push(
-          <Rect
-            x={this.cX(layerX + weights.length * 3)}
-            y={this.cY(y, this.neuronCounts[layerNo])}
-            width={this.cellSize}
-            height={this.cellSize}
-            radius={this.cellSize / 4}
-            align="center"
-            fill={num2color(1)}
-            borderColor="#aaaaaa"
-            key={`func-${layerNo}-activation-${y}`}
-            onShowTooltip={(x, y, text) => this.setState({ tooltip: { x, y: y + this.cellSize / 2 + 2, text } })}
-            onHideTooltip={() => this.setState({ tooltip: undefined })}
-            tooltip={[
-              'f(x) = exp(x) / total',
-              `x = ${data[y].toFixed(16)}`,
-              `result = ${(data[y] / 1).toFixed(16)}`,
-            ].join('\n')}
-          />,
-          <Text
-            x={this.cX(layerX + weights.length * 3 + 1)}
-            y={this.cY(y, this.neuronCounts[layerNo]) + this.cellSize / 2}
-            text={`${(0).toFixed(3)}`}
-            fontSize={this.fontSize}
-            height={this.cellSize}
-            align="middle"
-            color="black"
-            key={`func-${layerNo}-result-${y}`}
-          />,
-        ),
-      );
-
-      layerX += 0;
-    });
-    return elements;
+          })}
+        </svg>
+        {this.state.tooltip ? (
+          <div
+            style={{
+              border: '1px solid red',
+              left: this.state.tooltip.x,
+              top: this.state.tooltip.y + 24,
+              position: 'fixed',
+            }}
+          >
+            {this.state.tooltip.text}
+          </div>
+        ) : undefined}
+      </>
+    );
   }
-  */
 }
