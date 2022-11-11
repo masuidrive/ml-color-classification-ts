@@ -156,7 +156,7 @@ const softmaxLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) => {
   return activationLayer('Softmax', input, (val) => Math.exp(val) / total, 'f(x) = exp(x) / total', tooltipFunc);
 };
 
-type DLGraphProps = { weights: any; layers: string[]; forcusLayerIndex?: number[] };
+type DLGraphProps = { weights: any; layers: string[]; forcusLayerIndex?: number[]; outputLabel?: string[] };
 type DLGraphStates = { input: number[]; tooltip: any };
 export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
   // グラフのサイズとか
@@ -184,6 +184,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
       fullConnected: fullConnectedLayer,
       relu: reluLayer,
       softmax: softmaxLayer,
+      output: this.outputColorLayer.bind(this),
     };
     this._handleTooltip = this.handleTooltip.bind(this);
     this.state = { input: times(this.inputNeuronCount, (_) => Math.random()), tooltip: undefined };
@@ -249,6 +250,27 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
       (this.state.input.length * 2 + (sampleHeight + 1) * 2) * cellSize,
       'Input',
     ];
+  };
+
+  outputColorLayer: layerFunc = (input, params, paramsIndex) => {
+    const width = 8;
+
+    const maxVal = Math.max(...input);
+    const elements = input.map((val, i) => (
+      <Text
+        x={layerMargin}
+        y={i * 2 * cellSize}
+        text={this.props.outputLabel![i]}
+        fontSize={fontSize}
+        fontWeight={maxVal === val ? 'bold' : 'normal'}
+        height={cellSize}
+        valign="middle"
+        color={`rgba(0,0,0,${val * 0.8 + 0.2})`}
+        key={`output-layer-text-${i}`}
+      />
+    ));
+
+    return [input, elements, width * cellSize, input.length * 2 * cellSize, 'Output'];
   };
 
   render() {

@@ -130,8 +130,9 @@ export default function App() {
           <div style={{ position: 'sticky', top: '0px', backgroundColor: 'white' }}>
             <DLGraph
               weights={message?.data?.weights}
-              layers={['input', 'fullConnected:1', 'relu', 'fullConnected:2', 'softmax']}
-              forcusLayerIndex={[0, 3]}
+              layers={['input', 'fullConnected:1', 'relu', 'fullConnected:2', 'softmax', 'output']}
+              forcusLayerIndex={[0, 5]}
+              outputLabel={COLOR_INDEX_LABEL}
             />
           </div>
           <hr />
