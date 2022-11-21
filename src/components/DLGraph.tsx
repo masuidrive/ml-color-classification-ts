@@ -265,7 +265,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
         fontWeight={maxVal === val ? 'bold' : 'normal'}
         height={cellSize}
         valign="middle"
-        color={`rgba(0,0,0,${val * 0.8 + 0.2})`}
+        color={`rgba(0,0,0,${Math.min(1, val * 1.6 + 0.2)})`}
         key={`output-layer-text-${i}`}
       />
     ));

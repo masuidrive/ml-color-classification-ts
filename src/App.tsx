@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect, useState, useRef } from 'react';
 import { Range, Progress, Divider } from 'react-daisyui';
 import { DLGraph } from './components/DLGraph';
 import { predict } from './workers';
@@ -6,6 +6,7 @@ import { COLOR_INDEX_LABEL } from './dataset';
 import { clone, times } from './utils/array';
 import { num2color } from './utils/color';
 import { Line, Text, Rect, Circle } from './components/svg';
+import { elementCollision } from './utils/dom';
 import './styles.css';
 
 const worker = new Worker(new URL('./workers', import.meta.url));
@@ -79,50 +80,82 @@ const ColorMatrix1D: FC<ColorMatrix1DProps> = ({ vector, cellSize = 16, directio
 
 export default function App() {
   const [message, setMessage] = useState<any>({});
-  const [colorR, setColorR] = useState<number>(Math.floor(Math.random() * 255));
-  const [colorG, setColorG] = useState<number>(Math.floor(Math.random() * 255));
-  const [colorB, setColorB] = useState<number>(Math.floor(Math.random() * 255));
+  const [graphLayers, setGraphLayers] = useState<number[]>([0, 5]);
+  const refGraph = useRef<any>();
+  const ref1 = useRef<any>();
+  const ref2 = useRef<any>();
+  const ref3 = useRef<any>();
+  const refs = [
+    [ref1, [0, 1, 5]],
+    [ref2, [0, 1, 2, 5]],
+    [ref3, [0, 1, 2, 3, 4, 5]],
+  ];
+  const handleScroll = (e: Event) => {
+    const collRef =  refs.reverse().find((ref) => 
+      refGraph != undefined && elementCollision(refGraph, ref[0] as React.RefObject<HTMLElement>)
+    );
+    if(collRef) setGraphLayers( collRef[1] as number[] )
+  };
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [graphLayers, ...refs.map((val) => val[0])]);
+
   useEffect(() => {
     worker.onmessage = (message: MessageEvent) => {
       if (message?.data?.command === 'progress' && message?.data?.label == 'train:iterator') {
         setMessage(message.data);
       }
-      // Note: in your actual app code, make sure to check if Home
-      // is still mounted before setting state asynchronously!
-      // const webWorkerMessage = await worker.hello("Tobi");
-      // setMessage(webWorkerMessage as any);
-      // const webWorkerMessage = await worker.train();
     };
     return () => {
       worker.onmessage = null;
     };
   }, [worker]);
-
-  const form = (
-    <div>
-      <div className="grid grid-rows-3 grid-flow-col gap-2 grid-cols-[48px_2em_1fr]">
-        <div className="text-right text-sm">{colorR}</div>
-        <div className="text-right text-sm">{colorG}</div>
-        <div className="text-right text-sm">{colorB}</div>
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
-    </div>
-  );
-
   const W1 = message?.data?.weights?.W1 as number[][] | undefined;
   const b1 = message?.data?.weights?.b1 as number[] | undefined;
   const W2 = message?.data?.weights?.W2 as number[][] | undefined;
   const b2 = message?.data?.weights?.b2 as number[] | undefined;
 
   if (W1 && b1 && W2 && b2) {
-    const rgb = [colorR / 255.0, colorG / 255.0, colorB / 255.0];
-    const input_layer = 3;
-    const hidden_layer = 4;
-    const output_layer = 10;
-    const max_layer_height = Math.max(input_layer, hidden_layer, output_layer);
-    const answers = predict(rgb, message?.data?.weights);
+    return (
+      <div className="lg:container lg:mx-auto">
+        <div style={{ margin: '0 auto' }}>
+          ここに機械学習の説明を入れます
+          <div style={{ position: 'sticky', top: '0px', backgroundColor: 'white' }} ref={refGraph}>
+            <DLGraph
+              weights={message?.data?.weights}
+              layers={['input', 'fullConnected:1', 'relu', 'fullConnected:2', 'softmax', 'output']}
+              forcusLayerIndex={graphLayers}
+              outputLabel={COLOR_INDEX_LABEL}
+            />
+          </div>
+          <div ref={ref1}>
+            <h1>入力</h1>
+            今回は色をRGBの0.0〜1.0の数字で表します。<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+          </div>
+          <div ref={ref2}>
+            <h1>第一層 全結合層</h1>
+            今回は色をRGBの0.0〜1.0の数字で表します。<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+          </div>
+          <div style={{ marginBottom: '1024px' }} ref={ref3}>
+            ここには次の単元が入ります<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+          </div>
+        </div>
+      </div>
+    );
+  } else {
+    return <div>loading...</div>;
+  }
+}
+
+/*
+  const W1 = message?.data?.weights?.W1 as number[][] | undefined;
+  const b1 = message?.data?.weights?.b1 as number[] | undefined;
+  const W2 = message?.data?.weights?.W2 as number[][] | undefined;
+  const b2 = message?.data?.weights?.b2 as number[] | undefined;
+
+  if (W1 && b1 && W2 && b2) {
     return (
       <div className="lg:container lg:mx-auto">
         <div style={{ margin: '0 auto' }}>
@@ -134,6 +167,14 @@ export default function App() {
               forcusLayerIndex={[0, 5]}
               outputLabel={COLOR_INDEX_LABEL}
             />
+          </div>
+          <div>
+            <h1>入力</h1>
+            今回は色をRGBの0.0〜1.0の数字で表します。
+          </div>
+          <div>
+            <h1>第一層 全結合層</h1>
+            今回は色をRGBの0.0〜1.0の数字で表します。
           </div>
           <hr />
           W1
@@ -154,4 +195,5 @@ export default function App() {
   } else {
     return <div>loading...</div>;
   }
-}
+
+*/
