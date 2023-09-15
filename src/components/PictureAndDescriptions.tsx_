@@ -3,8 +3,10 @@ import { elementCollision } from '../utils/dom';
 
 export const Section = () => {};
 
-
 export const PictureAndDescription = () => {
+  const [graphLayers, setGraphLayers] = useState<number[]>([0, 5]);
+  const [message, setMessage] = useState<any>({});
+
   const refGraph = useRef<any>();
   const ref1 = useRef<any>();
   const ref2 = useRef<any>();

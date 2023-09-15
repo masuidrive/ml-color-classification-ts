@@ -58,10 +58,10 @@ const fullConnectedLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) 
           key={`fullConnected-${paramsIndex}-${x}-${y}`}
           tooltip={[
             `f(x) = x * W[${y},${x}] + b[${x}]`,
-            `x = ${(input[x] ?? -10).toFixed(16)}`,
-            `W[${y},${x}] = ${val.toFixed(16)}`,
-            `b[${x}] = ${bias.toFixed(16)}`,
-            `result = ${result.toFixed(16)}`,
+            `x = ${(input[x] ?? -10).toFixed(4)}`,
+            `W[${y},${x}] = ${val.toFixed(4)}`,
+            `b[${x}] = ${bias.toFixed(4)}`,
+            `result = ${result.toFixed(4)}`,
           ].join('\n')}
           onTooltip={tooltipFunc}
         />,
