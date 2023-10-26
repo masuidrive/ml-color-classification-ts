@@ -1,4 +1,3 @@
-import { style } from '@mui/system';
 import { useState, useRef } from 'react';
 
 type LineProps = { x1: number; y1: number; x2: number; y2: number; color: string; style?: any };

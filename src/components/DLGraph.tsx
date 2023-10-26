@@ -31,6 +31,7 @@ const fullConnectedLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) 
     times(oLen, (y) => {
       elements.push(
         <Line
+          key={`${x}-${y}`}
           x1={layerMargin}
           y1={(x * 2 + (h - iLen) + 0.5) * cellSize}
           x2={(connectorWidth + x * 2) * cellSize}
@@ -68,7 +69,12 @@ const fullConnectedLayer: layerFunc = (input, params, paramsIndex, tooltipFunc) 
       );
       if (x > 0) {
         elements.push(
-          <PlusIcon x={(x * 2 - 0.5 + connectorWidth) * cellSize} y={(y * 2 + 0.5) * cellSize} size={fontSize} />,
+          <PlusIcon
+            x={(x * 2 - 0.5 + connectorWidth) * cellSize}
+            y={(y * 2 + 0.5) * cellSize}
+            size={fontSize}
+            key={`plusicon-${paramsIndex}-${x}-${y}`}
+          />,
         );
       }
     }),
@@ -117,6 +123,7 @@ const activationLayer = (
         y1={(y * 2 + 0.5) * cellSize}
         x2={connectorWidth * cellSize - 2}
         y2={(y * 2 + 0.5) * cellSize}
+        key={`activation-line-${y}`}
         color={`#aaaaaa`}
       />,
       <Rect
@@ -126,7 +133,7 @@ const activationLayer = (
         height={cellSize - 1}
         fill={num2color(val)}
         borderColor="#aaaaaa"
-        key={`activation-${y}`}
+        key={`activation-rect-${y}`}
         tooltip={[tooltip, `x = ${val.toFixed(16)}`, `result = ${result.toFixed(16)}`].join('\n')}
         onTooltip={tooltipFunc}
       />,
@@ -206,6 +213,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
 
     let elements: ReactNode[] = [
       <Rect
+        key="init-rect"
         x={((inputSliderWidth - sampleWidth) / 2) * cellSize + 3}
         y={0}
         width={sampleWidth * cellSize - 2}
@@ -243,6 +251,7 @@ export class DLGraph extends React.Component<DLGraphProps, DLGraphStates> {
         />,
       );
     });
+
     return [
       this.state.input,
       elements,

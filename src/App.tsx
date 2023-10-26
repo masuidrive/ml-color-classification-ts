@@ -1,11 +1,8 @@
 import React, { FC, useEffect, useState, useRef } from 'react';
-import { Range, Progress, Divider } from 'react-daisyui';
 import { DLGraph } from './components/DLGraph';
-import { predict } from './workers';
 import { COLOR_INDEX_LABEL } from './dataset';
-import { clone, times } from './utils/array';
 import { num2color } from './utils/color';
-import { Line, Text, Rect, Circle } from './components/svg';
+import { Rect } from './components/svg';
 import { elementCollision } from './utils/dom';
 import './styles.css';
 
@@ -80,6 +77,7 @@ const ColorMatrix1D: FC<ColorMatrix1DProps> = ({ vector, cellSize = 16, directio
 
 export default function App() {
   const [message, setMessage] = useState<any>({});
+  const [epochMessage, setEpochMessage] = useState<any>({});
   const [graphLayers, setGraphLayers] = useState<number[]>([0, 5]);
   const refGraph = useRef<any>();
   const ref1 = useRef<any>();
@@ -91,10 +89,10 @@ export default function App() {
     [ref3, [0, 1, 2, 3, 4, 5]],
   ];
   const handleScroll = (e: Event) => {
-    const collRef =  refs.reverse().find((ref) => 
-      refGraph != undefined && elementCollision(refGraph, ref[0] as React.RefObject<HTMLElement>)
-    );
-    if(collRef) setGraphLayers( collRef[1] as number[] )
+    const collRef = refs
+      .reverse()
+      .find((ref) => refGraph != undefined && elementCollision(refGraph, ref[0] as React.RefObject<HTMLElement>));
+    if (collRef) setGraphLayers(collRef[1] as number[]);
   };
 
   useEffect(() => {
@@ -107,11 +105,15 @@ export default function App() {
       if (message?.data?.command === 'progress' && message?.data?.label == 'train:iterator') {
         setMessage(message.data);
       }
+      if (message?.data?.command === 'progress' && message?.data?.label == 'train:epoch') {
+        setEpochMessage(message.data);
+      }
     };
     return () => {
       worker.onmessage = null;
     };
   }, [worker]);
+
   const W1 = message?.data?.weights?.W1 as number[][] | undefined;
   const b1 = message?.data?.weights?.b1 as number[] | undefined;
   const W2 = message?.data?.weights?.W2 as number[][] | undefined;
@@ -130,16 +132,66 @@ export default function App() {
               outputLabel={COLOR_INDEX_LABEL}
             />
           </div>
+          <br />
+          {epochMessage?.data?.test_loss}
           <div ref={ref1}>
             <h1>入力</h1>
-            今回は色をRGBの0.0〜1.0の数字で表します。<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+            今回は色をRGBの0.0〜1.0の数字で表します。
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
           </div>
           <div ref={ref2}>
             <h1>第一層 全結合層</h1>
-            今回は色をRGBの0.0〜1.0の数字で表します。<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+            今回は色をRGBの0.0〜1.0の数字で表します。
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
           </div>
           <div style={{ marginBottom: '1024px' }} ref={ref3}>
-            ここには次の単元が入ります<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+            ここには次の単元が入ります
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
           </div>
         </div>
       </div>
