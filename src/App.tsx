@@ -5,6 +5,52 @@ import { num2color } from './utils/color';
 import { Rect } from './components/svg';
 import { elementCollision } from './utils/dom';
 import './styles.css';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+
+const TrainChart: FC<{ epochInfo: any; max_epoch: number }> = ({ epochInfo, max_epoch }) => {
+  if (!epochInfo) return <></>;
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: 'Chart.js Line Chart',
+      },
+    },
+  };
+
+  const labels = Array.from({ length: max_epoch }, (_, i) => i + 1);
+
+  const data = {
+    labels,
+    datasets: [
+      {
+        label: 'Dataset 1',
+        data: epochInfo.map((e: any) => e.data.test_loss),
+        borderColor: 'rgb(255, 99, 132)',
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+      },
+    ],
+  };
+
+  return <Line options={options} data={data} />;
+};
 
 const worker = new Worker(new URL('./workers', import.meta.url));
 setTimeout(() => {
@@ -78,6 +124,7 @@ const ColorMatrix1D: FC<ColorMatrix1DProps> = ({ vector, cellSize = 16, directio
 export default function App() {
   const [message, setMessage] = useState<any>({});
   const [epochMessage, setEpochMessage] = useState<any>({});
+  const [epochInfo, setEpochInfo] = useState<any>([]);
   const [graphLayers, setGraphLayers] = useState<number[]>([0, 5]);
   const refGraph = useRef<any>();
   const ref1 = useRef<any>();
@@ -107,6 +154,7 @@ export default function App() {
       }
       if (message?.data?.command === 'progress' && message?.data?.label == 'train:epoch') {
         setEpochMessage(message.data);
+        setEpochInfo((prev: any) => [...prev, message.data]);
       }
     };
     return () => {
@@ -133,7 +181,8 @@ export default function App() {
             />
           </div>
           <br />
-          {epochMessage?.data?.test_loss}
+          {epochInfo.map((info: any, i: number) => JSON.stringify(info)).join(' | ')}
+          <TrainChart epochInfo={epochInfo} max_epoch={12} />
           <div ref={ref1}>
             <h1>入力</h1>
             今回は色をRGBの0.0〜1.0の数字で表します。
