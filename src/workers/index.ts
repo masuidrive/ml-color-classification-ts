@@ -41,10 +41,36 @@ const argmax_1d = (vector: number[]) => vector.map((val, i) => [val, i]).reduce(
 /// 1次元配列の中にマイナスの数字があれば0にする
 const relu_1d = (x: number[]): number[] => x.map((v) => Math.max(v, 0));
 
+// 未テスト
+const relu_1d_backwards = (x: number[]): number[] => x.map((v) => (v > 0 ? 1 : 0));
+
+// 全結合層
+const affine_1d = (x: number[], w: number[][], b: number[]): number[] => {
+  return times(w[0].length, (w1i) => sum_1d(x.map((xx, i) => xx * w[i][w1i] + b[i]))) as number[];
+};
+/*
+const affine_1d_backwards = (
+  dout: number[],
+  w: number[][],
+  x: number[],
+): { dx: number[]; dw: number[]; db: number[] } => {
+  let dx = dout.map((d, i) => d * w[i]);
+  let dw = x.map((xx, i) => xx * dout[i]);
+  let db = dout;
+  return { dx, dw, db };
+};
+*/
+
 /// 1次元配列の合計値が1.0に調整する
 const softmax_1d = (x: number[]): number[] => {
   const base = sum_1d(x.map((v) => Math.exp(v)));
   return x.map((v) => Math.exp(v) / base);
+};
+
+// 未テスト
+const softmax_1d_backwards = (x: number[]): number[] => {
+  const y = softmax_1d(x);
+  return y.map((yy, i) => yy * (1 - yy));
 };
 
 /// 同じサイズの1次元配列同士の足し算
@@ -88,11 +114,13 @@ const numerical_gradient_2d = (loss_func: any, x: number[][]) => {
 export const predict = (x: number[], weights: any): number[] => {
   // x.shape,W1.shape,b1.shape,a1.shape,
   // shape  x(3), W1(3, 30), b1(30,), a1(100, 30)
-  const a1 = times(weights.W1[0].length, (w1i) =>
+  const _a1 = times(weights.W1[0].length, (w1i) =>
     sum_1d(x.map((xx, i) => xx * weights.W1[i][w1i] + weights.b1[i])),
   ) as number[];
+  const a1 = affine_1d(x, weights.W1, weights.b1);
   const z1 = relu_1d(a1);
-  const a2 = times(weights.W2[0].length, (w2i) =>
+  const a2 = affine_1d(z1, weights.W2, weights.b2);
+  const _a2 = times(weights.W2[0].length, (w2i) =>
     sum_1d(z1.map((xx, i) => xx * weights.W2[i][w2i] + weights.b2[i])),
   ) as number[];
   const y = softmax_1d(a2);
@@ -124,6 +152,15 @@ const numerical_gradient = (x: number[][], t: number[], weights: any): { [key: s
 
   return grads;
 };
+
+/*
+const backpropagation = (x: number[][], t: number[], weights: any): { [key: string]: number[][] | number[] } => {
+  let l = loss(x, t, weights);
+  let dout = 1;
+
+  return grads;
+};
+*/
 
 // 正解率を求める
 const accuracy = (x: number[][], t: number[], weights: any) => {
